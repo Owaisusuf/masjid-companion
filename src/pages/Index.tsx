@@ -12,7 +12,7 @@ import DailyHadith from "@/components/mosque/DailyHadith";
 import Footer from "@/components/mosque/Footer";
 
 const SectionDivider = () => (
-  <div className="flex items-center justify-center py-2">
+  <div className="flex items-center justify-center py-3">
     <div className="arch-divider" />
   </div>
 );
@@ -22,7 +22,7 @@ const Index = () => {
     <main className="min-h-screen bg-background islamic-pattern">
       <Navigation />
       <Header />
-      <div className="space-y-10 py-8">
+      <div className="space-y-10 py-10">
         <PrayerTimesCard />
         <SectionDivider />
         <RamadanSchedule />

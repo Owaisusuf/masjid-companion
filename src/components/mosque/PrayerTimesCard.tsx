@@ -3,13 +3,13 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const prayerNames: { key: string; label: string; urdu: string; arabic: string }[] = [
-  { key: "Fajr", label: "Fajr", urdu: "فجر", arabic: "الفجر" },
-  { key: "Sunrise", label: "Sunrise", urdu: "طلوع", arabic: "الشروق" },
-  { key: "Dhuhr", label: "Dhuhr", urdu: "ظہر", arabic: "الظهر" },
-  { key: "Asr", label: "Asr", urdu: "عصر", arabic: "العصر" },
-  { key: "Maghrib", label: "Maghrib", urdu: "مغرب", arabic: "المغرب" },
-  { key: "Isha", label: "Isha", urdu: "عشاء", arabic: "العشاء" },
+const prayerNames: { key: string; label: string; urdu: string; icon: string }[] = [
+  { key: "Fajr", label: "Fajr", urdu: "فجر", icon: "🌙" },
+  { key: "Sunrise", label: "Sunrise", urdu: "طلوع", icon: "🌅" },
+  { key: "Dhuhr", label: "Dhuhr", urdu: "ظہر", icon: "☀️" },
+  { key: "Asr", label: "Asr", urdu: "عصر", icon: "🌤" },
+  { key: "Maghrib", label: "Maghrib", urdu: "مغرب", icon: "🌇" },
+  { key: "Isha", label: "Isha", urdu: "عشاء", icon: "🌃" },
 ];
 
 function parseTimeToMinutes(time12: string): number {
@@ -55,37 +55,38 @@ const PrayerTimesCard = () => {
   }, [data]);
 
   return (
-    <section id="prayers" className="px-4 max-w-4xl mx-auto">
+    <section id="prayers" className="px-4 max-w-5xl mx-auto">
       <div className="section-heading">
         <Clock className="w-5 h-5 text-primary shrink-0" />
-        <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground whitespace-nowrap">Prayer Times</h2>
-        <span className="font-urdu text-base text-muted-foreground whitespace-nowrap">اوقاتِ نماز</span>
+        <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Prayer Times</h2>
+        <span className="font-urdu text-sm text-muted-foreground">اوقاتِ نماز</span>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           return (
             <div
               key={p.key}
-              className={`glass-card p-3 text-center transition-all duration-300 ${
-                isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30" : "hover:glow-primary"
+              className={`glass-card p-4 text-center transition-all duration-300 ${
+                isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md"
               }`}
             >
-              <p className="font-urdu text-xs text-muted-foreground" dir="rtl">{p.urdu}</p>
-              <p className="font-heading font-semibold text-foreground text-xs mb-1">{p.label}</p>
+              <div className="text-2xl mb-1">{p.icon}</div>
+              <p className="font-urdu text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
+              <p className="font-heading font-semibold text-foreground text-xs mb-1.5">{p.label}</p>
               {isLoading ? (
-                <Skeleton className="h-6 w-16 mx-auto" />
+                <Skeleton className="h-7 w-16 mx-auto" />
               ) : isError ? (
                 <p className="text-destructive text-[10px]">Error</p>
               ) : (
                 <>
-                  <p className={`font-heading font-bold text-base ${isNext ? "text-primary" : "text-foreground"}`}>
+                  <p className={`font-body font-bold text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
                     {data?.prayers[p.key as keyof typeof data.prayers]}
                   </p>
                   {isNext && data?.prayers && (
-                    <p className="text-[9px] text-primary/80 font-heading mt-0.5 animate-pulse-glow">
-                      ▲ {getTimeUntil(data.prayers[p.key as keyof typeof data.prayers])}
+                    <p className="text-[10px] text-primary font-body font-medium mt-1 animate-pulse-glow">
+                      Next • {getTimeUntil(data.prayers[p.key as keyof typeof data.prayers])}
                     </p>
                   )}
                 </>

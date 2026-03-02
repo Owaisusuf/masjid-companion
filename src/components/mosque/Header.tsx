@@ -1,6 +1,6 @@
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
@@ -11,31 +11,29 @@ const Header = () => {
   const ramadanActive = isRamadan();
 
   return (
-    <header className="relative min-h-[420px] sm:min-h-[480px] flex items-center justify-center overflow-hidden islamic-pattern">
+    <header className="relative min-h-[480px] sm:min-h-[540px] flex items-center justify-center overflow-hidden">
       <img
         src={heroBg}
         alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-30"
+        className="absolute inset-0 w-full h-full object-cover"
         loading="eager"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
+      <div className="absolute inset-0 hero-overlay" />
       
-      {/* Decorative corner ornaments */}
-      <div className="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-accent/20 rounded-tl-xl" />
-      <div className="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-accent/20 rounded-tr-xl" />
-      <div className="absolute bottom-16 left-6 w-16 h-16 border-b-2 border-l-2 border-accent/20 rounded-bl-xl" />
-      <div className="absolute bottom-16 right-6 w-16 h-16 border-b-2 border-r-2 border-accent/20 rounded-br-xl" />
+      {/* Corner ornaments */}
+      <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
+      <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
-      <div className="relative z-10 text-center px-4 py-10 max-w-2xl mx-auto">
+      <div className="relative z-10 text-center px-4 py-12 max-w-2xl mx-auto">
         {/* Bismillah */}
-        <p className="font-quran text-2xl sm:text-3xl md:text-4xl text-accent mb-4 leading-relaxed" dir="rtl">
+        <p className="font-quran text-3xl sm:text-4xl md:text-5xl text-white/90 mb-6 leading-relaxed" dir="rtl">
           بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
         </p>
 
-        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 text-foreground tracking-tight">
+        <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-white tracking-tight">
           Jamia Masjid Shareef
         </h1>
-        <p className="font-urdu text-xl sm:text-2xl text-accent mb-3" dir="rtl">
+        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-4" dir="rtl">
           جامع مسجد شریف
         </p>
         
@@ -43,26 +41,25 @@ const Header = () => {
           href={mapUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-xs sm:text-sm mb-5"
+          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm mb-6"
         >
-          <MapPin className="w-3.5 h-3.5" />
+          <MapPin className="w-4 h-4" />
           <span>Old Barzulla, Srinagar, Kashmir</span>
-          <ExternalLink className="w-3 h-3" />
         </a>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2">
           {data?.hijri && (
-            <div className="glass-card inline-flex items-center gap-2 px-4 py-2">
-              <span className="font-arabic text-base text-accent">{data.hijri.monthAr}</span>
-              <span className="text-foreground font-heading font-semibold text-sm">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <span className="font-arabic text-base text-amber-300">{data.hijri.monthAr}</span>
+              <span className="text-white font-heading font-semibold text-sm">
                 {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
               </span>
             </div>
           )}
 
           {ramadanActive && todayRamadan && (
-            <div className="glass-card glow-accent inline-flex items-center gap-2 px-4 py-2">
-              <span className="text-accent font-heading font-semibold text-sm">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
+              <span className="text-amber-300 font-heading font-semibold text-sm">
                 ☪ Ramadan Mubarak — Day {todayRamadan.day}
               </span>
             </div>
