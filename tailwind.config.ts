@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["Outfit", "sans-serif"],
-        body: ["DM Sans", "sans-serif"],
+        heading: ["Playfair Display", "serif"],
+        body: ["Inter", "sans-serif"],
         arabic: ["Amiri", "serif"],
         urdu: ["Noto Nastaliq Urdu", "Amiri", "serif"],
         quran: ["Amiri Quran", "Amiri", "serif"],
