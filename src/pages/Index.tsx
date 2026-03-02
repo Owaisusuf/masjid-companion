@@ -11,21 +11,35 @@ import TasbihCounter from "@/components/mosque/TasbihCounter";
 import DailyHadith from "@/components/mosque/DailyHadith";
 import Footer from "@/components/mosque/Footer";
 
+const SectionDivider = () => (
+  <div className="flex items-center justify-center py-2">
+    <div className="arch-divider" />
+  </div>
+);
+
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background islamic-pattern">
       <Navigation />
       <Header />
-      <div className="space-y-16 py-12">
+      <div className="space-y-10 py-8">
         <PrayerTimesCard />
+        <SectionDivider />
         <RamadanSchedule />
-        <QuranBrowser />
-        <HadithCollection />
-        <QiblaFinder />
-        <DuasSection />
-        <NamesOfAllah />
-        <TasbihCounter />
+        <SectionDivider />
         <DailyHadith />
+        <SectionDivider />
+        <QuranBrowser />
+        <SectionDivider />
+        <HadithCollection />
+        <SectionDivider />
+        <QiblaFinder />
+        <SectionDivider />
+        <DuasSection />
+        <SectionDivider />
+        <NamesOfAllah />
+        <SectionDivider />
+        <TasbihCounter />
       </div>
       <Footer />
     </main>

@@ -57,7 +57,8 @@
   }
 
   .font-urdu {
-    font-family: 'Noto Nastaliq Urdu', 'Amiri', serif;
+    font-family: 'Noto Nastaliq Urdu', serif;
+    line-height: 2.2;
   }
 
   .font-quran {
@@ -100,6 +101,62 @@
   .ramadan-today {
     @apply bg-accent/15 border-accent/40;
   }
+
+  /* Islamic geometric pattern overlay */
+  .islamic-pattern {
+    position: relative;
+  }
+  .islamic-pattern::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c8a86e' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40Z'/%3E%3Cpath d='M40 10L70 40L40 70L10 40Z'/%3E%3Cpath d='M40 20L60 40L40 60L20 40Z'/%3E%3Ccircle cx='40' cy='40' r='12'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 80px 80px;
+  }
+
+  /* Star decoration for sections */
+  .section-decorated {
+    position: relative;
+  }
+  .section-decorated::after {
+    content: '✦';
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    font-size: 14px;
+    color: hsl(var(--accent) / 0.2);
+  }
+
+  /* Section heading with decorative lines */
+  .section-heading {
+    @apply flex items-center gap-3 mb-5;
+  }
+  .section-heading::before,
+  .section-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+  }
+  .section-heading::before {
+    max-width: 40px;
+  }
+  .section-heading::after {
+    max-width: 100%;
+  }
+
+  /* Arch divider between sections */
+  .arch-divider {
+    width: 60px;
+    height: 30px;
+    margin: 0 auto;
+    border-top: 2px solid hsl(var(--accent) / 0.15);
+    border-left: 2px solid hsl(var(--accent) / 0.15);
+    border-right: 2px solid hsl(var(--accent) / 0.15);
+    border-radius: 60px 60px 0 0;
+  }
 }
 
 @keyframes float {
@@ -112,10 +169,35 @@
   50% { opacity: 1; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
 
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
 }

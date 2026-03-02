@@ -3,13 +3,13 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const prayerNames: { key: string; label: string; arabic: string }[] = [
-  { key: "Fajr", label: "Fajr", arabic: "الفجر" },
-  { key: "Sunrise", label: "Sunrise", arabic: "الشروق" },
-  { key: "Dhuhr", label: "Dhuhr", arabic: "الظهر" },
-  { key: "Asr", label: "Asr", arabic: "العصر" },
-  { key: "Maghrib", label: "Maghrib", arabic: "المغرب" },
-  { key: "Isha", label: "Isha", arabic: "العشاء" },
+const prayerNames: { key: string; label: string; urdu: string; arabic: string }[] = [
+  { key: "Fajr", label: "Fajr", urdu: "فجر", arabic: "الفجر" },
+  { key: "Sunrise", label: "Sunrise", urdu: "طلوع", arabic: "الشروق" },
+  { key: "Dhuhr", label: "Dhuhr", urdu: "ظہر", arabic: "الظهر" },
+  { key: "Asr", label: "Asr", urdu: "عصر", arabic: "العصر" },
+  { key: "Maghrib", label: "Maghrib", urdu: "مغرب", arabic: "المغرب" },
+  { key: "Isha", label: "Isha", urdu: "عشاء", arabic: "العشاء" },
 ];
 
 function parseTimeToMinutes(time12: string): number {
@@ -24,13 +24,10 @@ function getNextPrayer(prayers: Record<string, string>): string | null {
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const order = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
-
   for (const key of order) {
-    if (prayers[key] && parseTimeToMinutes(prayers[key]) > nowMinutes) {
-      return key;
-    }
+    if (prayers[key] && parseTimeToMinutes(prayers[key]) > nowMinutes) return key;
   }
-  return "Fajr"; // After Isha, next is Fajr
+  return "Fajr";
 }
 
 function getTimeUntil(time12: string): string {
@@ -59,36 +56,36 @@ const PrayerTimesCard = () => {
 
   return (
     <section id="prayers" className="px-4 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <Clock className="w-5 h-5 text-primary" />
-        <h2 className="font-heading text-2xl font-bold text-foreground">Prayer Times</h2>
-        <span className="font-arabic text-lg text-muted-foreground">اوقات الصلاة</span>
+      <div className="section-heading">
+        <Clock className="w-5 h-5 text-primary shrink-0" />
+        <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground whitespace-nowrap">Prayer Times</h2>
+        <span className="font-urdu text-base text-muted-foreground whitespace-nowrap">اوقاتِ نماز</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           return (
             <div
               key={p.key}
-              className={`glass-card p-4 text-center transition-all duration-300 ${
+              className={`glass-card p-3 text-center transition-all duration-300 ${
                 isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30" : "hover:glow-primary"
               }`}
             >
-              <p className="font-arabic text-sm text-muted-foreground mb-1">{p.arabic}</p>
-              <p className="font-heading font-semibold text-foreground text-sm mb-2">{p.label}</p>
+              <p className="font-urdu text-xs text-muted-foreground" dir="rtl">{p.urdu}</p>
+              <p className="font-heading font-semibold text-foreground text-xs mb-1">{p.label}</p>
               {isLoading ? (
-                <Skeleton className="h-7 w-20 mx-auto" />
+                <Skeleton className="h-6 w-16 mx-auto" />
               ) : isError ? (
-                <p className="text-destructive text-xs">Error</p>
+                <p className="text-destructive text-[10px]">Error</p>
               ) : (
                 <>
-                  <p className={`font-heading font-bold text-lg ${isNext ? "text-primary" : "text-primary"}`}>
+                  <p className={`font-heading font-bold text-base ${isNext ? "text-primary" : "text-foreground"}`}>
                     {data?.prayers[p.key as keyof typeof data.prayers]}
                   </p>
                   {isNext && data?.prayers && (
-                    <p className="text-[10px] text-primary/80 font-heading mt-1 animate-pulse-glow">
-                      ▲ Next — in {getTimeUntil(data.prayers[p.key as keyof typeof data.prayers])}
+                    <p className="text-[9px] text-primary/80 font-heading mt-0.5 animate-pulse-glow">
+                      ▲ {getTimeUntil(data.prayers[p.key as keyof typeof data.prayers])}
                     </p>
                   )}
                 </>
