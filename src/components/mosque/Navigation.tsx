@@ -57,7 +57,7 @@ const Navigation = () => {
               className="w-full flex items-center justify-between py-3 border-b border-border/20 text-left"
             >
               <span className="font-heading text-sm text-foreground">{item.label}</span>
-              <span className="font-arabic text-sm text-muted-foreground">{item.urdu}</span>
+              <span className="font-urdu text-sm text-muted-foreground">{item.urdu}</span>
             </button>
           ))}
         </div>

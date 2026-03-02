@@ -29,7 +29,7 @@ const DuasSection = () => {
             }`}
           >
             {cat.label}
-            <span className="font-arabic text-xs ml-2">{cat.urdu}</span>
+            <span className="font-urdu text-xs ml-2">{cat.urdu}</span>
           </button>
         ))}
       </div>
@@ -44,7 +44,7 @@ const DuasSection = () => {
             >
               <div>
                 <p className="font-heading text-sm font-semibold text-foreground">{dua.title}</p>
-                <p className="font-arabic text-sm text-muted-foreground">{dua.titleUrdu}</p>
+                <p className="font-urdu text-sm text-muted-foreground leading-[2]">{dua.titleUrdu}</p>
               </div>
               {expandedDua === dua.id ? (
                 <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -61,7 +61,7 @@ const DuasSection = () => {
                 <p className="text-muted-foreground text-sm leading-relaxed italic text-center">
                   "{dua.english}"
                 </p>
-                <p className="font-arabic text-base text-muted-foreground leading-relaxed text-center" dir="rtl">
+                <p className="font-urdu text-base text-muted-foreground leading-[2.2] text-center" dir="rtl">
                   {dua.urdu}
                 </p>
                 <div className="flex justify-center">

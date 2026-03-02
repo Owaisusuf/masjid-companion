@@ -10,7 +10,7 @@ const Footer = () => {
           <h3 className="font-heading text-xl font-bold text-foreground mb-1">
             Jamia Masjid Shareef
           </h3>
-          <p className="font-arabic text-accent text-lg">جامع مسجد شریف</p>
+          <p className="font-urdu text-accent text-lg">جامع مسجد شریف</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground mb-6">

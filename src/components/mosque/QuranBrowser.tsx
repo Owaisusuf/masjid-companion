@@ -66,8 +66,8 @@ const QuranBrowser = () => {
     setLoading(true);
     try {
       const [arabicRes, englishRes, urduRes] = await Promise.all([
-        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}`).then((r) => r.json()),
-        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/en.asad`).then((r) => r.json()),
+        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/quran-uthmani`).then((r) => r.json()),
+        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/en.sahih`).then((r) => r.json()),
         fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/ur.jalandhry`).then((r) => r.json()),
       ]);
       setAyahs(arabicRes.data.ayahs);
@@ -86,7 +86,7 @@ const QuranBrowser = () => {
     try {
       const [arabicRes, englishRes, urduRes] = await Promise.all([
         fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/quran-uthmani`).then((r) => r.json()),
-        fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/en.asad`).then((r) => r.json()),
+        fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/en.sahih`).then((r) => r.json()),
         fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/ur.jalandhry`).then((r) => r.json()),
       ]);
       setJuzAyahs({
@@ -262,7 +262,7 @@ const QuranBrowser = () => {
                       <span className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 mt-2">
                         {ayah.numberInSurah}
                       </span>
-                      <p className="font-arabic text-xl sm:text-2xl leading-[2.2] text-foreground text-right flex-1" dir="rtl">
+                      <p className="font-quran text-xl sm:text-2xl leading-[2.4] text-foreground text-right flex-1" dir="rtl">
                         {ayah.text}
                       </p>
                     </div>
@@ -270,7 +270,7 @@ const QuranBrowser = () => {
                       <p className="text-sm text-muted-foreground leading-relaxed pl-10 mb-2">{engText}</p>
                     )}
                     {(showTranslation === "urdu" || showTranslation === "both") && urduText && (
-                      <p className="font-arabic text-base text-muted-foreground leading-relaxed pl-10" dir="rtl">{urduText}</p>
+                      <p className="font-urdu text-base text-muted-foreground leading-[2.2] pl-10" dir="rtl">{urduText}</p>
                     )}
                   </div>
                 );

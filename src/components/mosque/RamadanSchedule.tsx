@@ -53,7 +53,7 @@ const RamadanSchedule = () => {
       <div className="flex items-center gap-2 mb-6">
         <Moon className="w-5 h-5 text-accent" />
         <h2 className="font-heading text-2xl font-bold text-foreground">Ramadan Schedule</h2>
-        <span className="font-arabic text-lg text-muted-foreground">رمضان المبارک</span>
+        <span className="font-urdu text-lg text-muted-foreground">رمضان المبارک</span>
       </div>
 
       {/* Today's highlight */}
@@ -113,7 +113,7 @@ const RamadanSchedule = () => {
                     <td className="px-3 sm:px-4 py-2.5">
                       {new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </td>
-                    <td className="px-3 sm:px-4 py-2.5 font-arabic text-right hidden sm:table-cell">{d.dayNameUrdu}</td>
+                    <td className="px-3 sm:px-4 py-2.5 font-urdu text-right hidden sm:table-cell">{d.dayNameUrdu}</td>
                     <td className="px-3 sm:px-4 py-2.5 text-center font-heading">{d.sehri}</td>
                     <td className={`px-3 sm:px-4 py-2.5 text-center font-heading ${isToday ? "text-accent" : ""}`}>
                       {d.iftar}
