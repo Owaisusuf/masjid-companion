@@ -23,7 +23,7 @@ const QiblaFinder = () => {
 
   const findQibla = () => {
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
+      setError("Geolocation is not supported");
       return;
     }
     setLoading(true);
@@ -35,7 +35,6 @@ const QiblaFinder = () => {
         setLoading(false);
       },
       () => {
-        // Use masjid coordinates as fallback
         const angle = calculateQibla(34.0522129, 74.7997336);
         setQiblaAngle(Math.round(angle * 10) / 10);
         setLoading(false);
@@ -45,63 +44,57 @@ const QiblaFinder = () => {
 
   return (
     <section id="qibla" className="px-4 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <Compass className="w-5 h-5 text-primary" />
-        <h2 className="font-heading text-2xl font-bold text-foreground">Qibla Direction</h2>
-        <span className="font-arabic text-lg text-muted-foreground">سمتِ قبلہ</span>
+      <div className="section-heading">
+        <Compass className="w-5 h-5 text-primary shrink-0" />
+        <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground whitespace-nowrap">Qibla Direction</h2>
+        <span className="font-urdu text-base text-muted-foreground whitespace-nowrap">سمتِ قبلہ</span>
       </div>
 
-      <div className="glass-card p-6 sm:p-8 text-center glow-primary">
+      <div className="glass-card p-5 sm:p-6 text-center glow-primary">
         {qiblaAngle === null ? (
           <div>
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-secondary/60 border-2 border-border/50 flex items-center justify-center">
-              <Compass className="w-12 h-12 text-muted-foreground" />
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-secondary/60 border-2 border-border/50 flex items-center justify-center">
+              <Compass className="w-10 h-10 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground text-sm mb-6 max-w-md mx-auto">
-              Find the direction of the Kaaba from your current location. Allow location access for accurate results.
+            <p className="text-muted-foreground text-xs mb-4 max-w-sm mx-auto">
+              اپنے مقام سے کعبہ شریف کی سمت معلوم کریں
             </p>
             <button
               onClick={findQibla}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-heading font-semibold text-xs hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-              {loading ? "Finding..." : "Find Qibla Direction"}
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+              {loading ? "تلاش..." : "Find Qibla Direction"}
             </button>
-            {error && <p className="text-destructive text-xs mt-3">{error}</p>}
+            {error && <p className="text-destructive text-[10px] mt-2">{error}</p>}
           </div>
         ) : (
           <div>
-            {/* Compass */}
-            <div className="relative w-52 h-52 sm:w-64 sm:h-64 mx-auto mb-6">
-              {/* Outer ring */}
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full border-2 border-border/60 bg-secondary/30" />
-              {/* Cardinal directions */}
-              <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-heading font-bold text-muted-foreground">N</span>
-              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-heading font-bold text-muted-foreground">S</span>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-heading font-bold text-muted-foreground">E</span>
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-heading font-bold text-muted-foreground">W</span>
-              {/* Qibla needle */}
+              <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[10px] font-heading font-bold text-muted-foreground">N</span>
+              <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[10px] font-heading font-bold text-muted-foreground">S</span>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-heading font-bold text-muted-foreground">E</span>
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-heading font-bold text-muted-foreground">W</span>
               <div
-                className="absolute inset-4 flex items-center justify-center"
+                className="absolute inset-3 flex items-center justify-center"
                 style={{ transform: `rotate(${qiblaAngle}deg)` }}
               >
                 <div className="w-1 h-1/2 relative">
-                  <div className="absolute bottom-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[40px] border-l-transparent border-r-transparent border-b-primary" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[30px] border-l-transparent border-r-transparent border-t-muted-foreground/30" />
+                  <div className="absolute bottom-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[7px] border-r-[7px] border-b-[32px] border-l-transparent border-r-transparent border-b-primary" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[24px] border-l-transparent border-r-transparent border-t-muted-foreground/30" />
                 </div>
               </div>
-              {/* Center dot */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-accent" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-accent border-2 border-accent" />
             </div>
 
-            <p className="font-heading text-3xl font-bold text-primary mb-1">{qiblaAngle}°</p>
-            <p className="text-muted-foreground text-sm mb-1">from North</p>
-            <p className="font-arabic text-accent text-lg">🕋 الكعبة المشرفة</p>
-            
+            <p className="font-heading text-2xl font-bold text-primary mb-0.5">{qiblaAngle}°</p>
+            <p className="text-muted-foreground text-xs mb-1">from North</p>
+            <p className="font-arabic text-accent text-base">🕋 الكعبة المشرفة</p>
             <button
               onClick={findQibla}
-              className="mt-4 text-xs text-primary hover:text-accent transition-colors underline underline-offset-2"
+              className="mt-3 text-[10px] text-primary hover:text-accent transition-colors underline underline-offset-2"
             >
               Recalculate
             </button>
