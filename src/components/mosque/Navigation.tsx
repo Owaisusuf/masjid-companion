@@ -5,9 +5,11 @@ const navItems = [
   { label: "Prayer Times", href: "#prayers", urdu: "نماز" },
   { label: "Ramadan", href: "#ramadan", urdu: "رمضان" },
   { label: "Quran", href: "#quran", urdu: "قرآن" },
+  { label: "Hadith", href: "#hadith-collection", urdu: "احادیث" },
   { label: "Qibla", href: "#qibla", urdu: "قبلہ" },
   { label: "Duas", href: "#duas", urdu: "دعائیں" },
-  { label: "Hadith", href: "#hadith", urdu: "حدیث" },
+  { label: "99 Names", href: "#names", urdu: "اسماء" },
+  { label: "Tasbih", href: "#tasbih", urdu: "تسبیح" },
 ];
 
 const Navigation = () => {
@@ -26,13 +28,13 @@ const Navigation = () => {
           Jamia Masjid Shareef
         </a>
 
-        {/* Desktop */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Desktop - scrollable */}
+        <div className="hidden md:flex items-center gap-1 overflow-x-auto">
           {navItems.map((item) => (
             <button
               key={item.href}
               onClick={() => scrollTo(item.href)}
-              className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground font-heading font-medium transition-colors rounded-lg hover:bg-secondary/50"
+              className="px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground font-heading font-medium transition-colors rounded-lg hover:bg-secondary/50 whitespace-nowrap"
             >
               {item.label}
             </button>
