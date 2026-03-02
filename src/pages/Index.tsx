@@ -3,8 +3,11 @@ import Header from "@/components/mosque/Header";
 import PrayerTimesCard from "@/components/mosque/PrayerTimesCard";
 import RamadanSchedule from "@/components/mosque/RamadanSchedule";
 import QuranBrowser from "@/components/mosque/QuranBrowser";
+import HadithCollection from "@/components/mosque/HadithCollection";
 import QiblaFinder from "@/components/mosque/QiblaFinder";
 import DuasSection from "@/components/mosque/DuasSection";
+import NamesOfAllah from "@/components/mosque/NamesOfAllah";
+import TasbihCounter from "@/components/mosque/TasbihCounter";
 import DailyHadith from "@/components/mosque/DailyHadith";
 import Footer from "@/components/mosque/Footer";
 
@@ -17,8 +20,11 @@ const Index = () => {
         <PrayerTimesCard />
         <RamadanSchedule />
         <QuranBrowser />
+        <HadithCollection />
         <QiblaFinder />
         <DuasSection />
+        <NamesOfAllah />
+        <TasbihCounter />
         <DailyHadith />
       </div>
       <Footer />
