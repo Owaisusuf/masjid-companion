@@ -2,6 +2,7 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
 import { Moon, MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import bismillah from "@/assets/bismillah.png";
 
 const Header = () => {
   const { data } = usePrayerTimes();
@@ -19,12 +20,13 @@ const Header = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
 
       <div className="relative z-10 text-center px-4 py-12 max-w-3xl mx-auto">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Moon className="w-5 h-5 text-accent" />
-          <span className="text-sm font-medium text-accent tracking-wider uppercase">
-            بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
-          </span>
-          <Moon className="w-5 h-5 text-accent" />
+        {/* Bismillah Calligraphy */}
+        <div className="flex justify-center mb-6">
+          <img
+            src={bismillah}
+            alt="Bismillah ir-Rahman ir-Raheem"
+            className="h-14 sm:h-16 md:h-20 w-auto invert opacity-90"
+          />
         </div>
 
         <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-foreground">

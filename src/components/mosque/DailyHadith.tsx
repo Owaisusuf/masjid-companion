@@ -5,11 +5,11 @@ const DailyHadith = () => {
   const hadith = getDailyHadith();
 
   return (
-    <section className="px-4 max-w-4xl mx-auto">
+    <section id="hadith" className="px-4 max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <BookOpen className="w-5 h-5 text-primary" />
         <h2 className="font-heading text-2xl font-bold text-foreground">Hadith of the Day</h2>
-        <span className="font-arabic text-lg text-muted-foreground">حدیثِ مبارکہ</span>
+        <span className="font-arabic text-lg text-muted-foreground">حدیثِ نبوی ﷺ</span>
       </div>
 
       <div className="glass-card p-8 text-center glow-primary">
