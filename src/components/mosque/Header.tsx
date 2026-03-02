@@ -20,21 +20,23 @@ const Header = () => {
       />
       <div className="absolute inset-0 hero-overlay" />
       
-      {/* Corner ornaments */}
       <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
       <div className="relative z-10 text-center px-4 py-12 max-w-2xl mx-auto">
-        {/* Bismillah */}
-        <p className="font-quran text-3xl sm:text-4xl md:text-5xl text-white/90 mb-10 leading-relaxed" dir="rtl">
+        <p className="font-quran text-3xl sm:text-4xl md:text-5xl text-white/90 mb-12 leading-relaxed" dir="rtl">
           بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
         </p>
 
         <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">
           Jamia Masjid Shareef
         </h1>
-        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-4" dir="rtl">
+        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-3" dir="rtl">
           جامع مسجد شریف
+        </p>
+
+        <p className="text-white/60 text-sm font-body tracking-widest uppercase mb-6">
+          Your Local Prayer Companion
         </p>
         
         <a
@@ -44,7 +46,7 @@ const Header = () => {
           className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm mb-6"
         >
           <MapPin className="w-4 h-4" />
-          <span>Old Barzulla, Srinagar, Kashmir</span>
+          <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
         </a>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2">

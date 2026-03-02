@@ -16,7 +16,7 @@ const Footer = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground mb-5">
           <div className="flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-primary" />
-            <span>Old Barzulla, Ram Bagh, Srinagar, J&K 190005</span>
+            <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
           </div>
           <a
             href={mapUrl}
@@ -31,9 +31,6 @@ const Footer = () => {
 
         <div className="w-24 h-px bg-border mx-auto mb-4" />
 
-        <p className="text-center text-xs text-muted-foreground">
-          Prayer times: AlAdhan API • University of Islamic Sciences, Karachi • Hanafi
-        </p>
         <p className="text-center text-xs text-muted-foreground/60 mt-1">
           © {new Date().getFullYear()} Jamia Masjid Shareef Old Barzulla Srinagar
         </p>

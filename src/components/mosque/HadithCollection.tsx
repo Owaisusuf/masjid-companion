@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { BookOpen, ArrowLeft, Loader2, Search, BookMarked } from "lucide-react";
+import { useState, useCallback } from "react";
+import { BookOpen, ArrowLeft, Loader2, Search, BookMarked, Languages } from "lucide-react";
 
 interface HadithBook {
   key: string;
-  apiKey: string;
+  engEdition: string;
+  urdEdition: string;
   name: string;
   nameUrdu: string;
   hadiths: number;
@@ -12,20 +13,20 @@ interface HadithBook {
 
 interface HadithItem {
   id: number;
-  header: string;
-  hadith_english: string;
-  book: string;
-  refno: string;
+  textEn: string;
+  textUr: string;
 }
 
 const hadithBooks: HadithBook[] = [
-  { key: "bukhari", apiKey: "bukhari", name: "Sahih al-Bukhari", nameUrdu: "صحیح بخاری", hadiths: 7563, color: "bg-emerald-600" },
-  { key: "muslim", apiKey: "muslim", name: "Sahih Muslim", nameUrdu: "صحیح مسلم", hadiths: 3032, color: "bg-red-600" },
-  { key: "tirmidhi", apiKey: "tirmidhi", name: "Jami at-Tirmidhi", nameUrdu: "جامع ترمذی", hadiths: 3956, color: "bg-blue-600" },
-  { key: "abudawud", apiKey: "abudawud", name: "Sunan Abu Dawud", nameUrdu: "سنن ابو داود", hadiths: 5274, color: "bg-orange-600" },
-  { key: "nasai", apiKey: "nasai", name: "Sunan an-Nasa'i", nameUrdu: "سنن نسائی", hadiths: 5758, color: "bg-gray-700" },
-  { key: "ibnmajah", apiKey: "ibnmajah", name: "Sunan Ibn Majah", nameUrdu: "سنن ابن ماجہ", hadiths: 4341, color: "bg-amber-600" },
+  { key: "bukhari", engEdition: "eng-bukhari", urdEdition: "urd-bukhari", name: "Sahih al-Bukhari", nameUrdu: "صحیح بخاری", hadiths: 7563, color: "bg-emerald-600" },
+  { key: "muslim", engEdition: "eng-muslim", urdEdition: "urd-muslim", name: "Sahih Muslim", nameUrdu: "صحیح مسلم", hadiths: 3032, color: "bg-red-600" },
+  { key: "tirmidhi", engEdition: "eng-tirmidhi", urdEdition: "urd-tirmidhi", name: "Jami at-Tirmidhi", nameUrdu: "جامع ترمذی", hadiths: 3956, color: "bg-blue-600" },
+  { key: "abudawud", engEdition: "eng-abudawud", urdEdition: "urd-abudawud", name: "Sunan Abu Dawud", nameUrdu: "سنن ابو داود", hadiths: 5274, color: "bg-orange-600" },
+  { key: "nasai", engEdition: "eng-nasai", urdEdition: "urd-nasai", name: "Sunan an-Nasa'i", nameUrdu: "سنن نسائی", hadiths: 5758, color: "bg-gray-700" },
+  { key: "ibnmajah", engEdition: "eng-ibnmajah", urdEdition: "urd-ibnmajah", name: "Sunan Ibn Majah", nameUrdu: "سنن ابن ماجہ", hadiths: 4341, color: "bg-amber-600" },
 ];
+
+const BASE_URL = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions";
 
 const HadithCollection = () => {
   const [selectedBook, setSelectedBook] = useState<HadithBook | null>(null);
@@ -35,32 +36,45 @@ const HadithCollection = () => {
   const [hasMore, setHasMore] = useState(true);
   const [searchNum, setSearchNum] = useState("");
   const [error, setError] = useState("");
+  const [lang, setLang] = useState<"en" | "ur">("en");
 
   const PER_PAGE = 10;
 
-  const loadHadiths = async (book: HadithBook, pageNum: number, append = false) => {
+  const fetchHadith = useCallback(async (edition: string, num: number): Promise<string | null> => {
+    try {
+      const res = await fetch(`${BASE_URL}/${edition}/${num}.json`);
+      if (!res.ok) {
+        const resFallback = await fetch(`${BASE_URL}/${edition}/${num}.min.json`);
+        if (!resFallback.ok) return null;
+        const d = await resFallback.json();
+        return d?.hadiths?.[0]?.text || d?.text || null;
+      }
+      const d = await res.json();
+      return d?.hadiths?.[0]?.text || d?.text || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const loadHadiths = useCallback(async (book: HadithBook, pageNum: number, append = false) => {
     setLoading(true);
     setError("");
     try {
       const start = (pageNum - 1) * PER_PAGE + 1;
-      const fetches = [];
-      for (let i = start; i < start + PER_PAGE; i++) {
-        fetches.push(
-          fetch(`https://hadithapi.pages.dev/api/${book.apiKey}/${i}`)
-            .then(r => r.ok ? r.json() : null)
-            .catch(() => null)
-        );
-      }
-      const results = await Promise.all(fetches);
-      const items: HadithItem[] = results
-        .filter(Boolean)
-        .map((h: any) => ({
-          id: h.hadithnumber || h.id,
-          header: h.header || "",
-          hadith_english: h.hadith_english || h.text || "",
-          book: h.book || "",
-          refno: h.refno || h.reference || "",
-        }));
+      const nums = Array.from({ length: PER_PAGE }, (_, i) => start + i);
+
+      const results = await Promise.all(
+        nums.map(async (num) => {
+          const [en, ur] = await Promise.all([
+            fetchHadith(book.engEdition, num),
+            fetchHadith(book.urdEdition, num),
+          ]);
+          if (!en && !ur) return null;
+          return { id: num, textEn: en || "", textUr: ur || "" };
+        })
+      );
+
+      const items = results.filter(Boolean) as HadithItem[];
 
       if (append) {
         setHadiths(prev => [...prev, ...items]);
@@ -72,7 +86,7 @@ const HadithCollection = () => {
       setError("Failed to load hadiths. Please try again.");
     }
     setLoading(false);
-  };
+  }, [fetchHadith]);
 
   const selectBook = (book: HadithBook) => {
     setSelectedBook(book);
@@ -100,17 +114,16 @@ const HadithCollection = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`https://hadithapi.pages.dev/api/${selectedBook.apiKey}/${num}`);
-      if (!res.ok) throw new Error("Not found");
-      const h = await res.json();
-      setHadiths([{
-        id: h.hadithnumber || num,
-        header: h.header || "",
-        hadith_english: h.hadith_english || h.text || "",
-        book: h.book || "",
-        refno: h.refno || "",
-      }]);
-      setHasMore(false);
+      const [en, ur] = await Promise.all([
+        fetchHadith(selectedBook.engEdition, num),
+        fetchHadith(selectedBook.urdEdition, num),
+      ]);
+      if (!en && !ur) {
+        setError("Hadith not found. Try a different number.");
+      } else {
+        setHadiths([{ id: num, textEn: en || "", textUr: ur || "" }]);
+        setHasMore(false);
+      }
     } catch {
       setError("Hadith not found. Try a different number.");
     }
@@ -154,11 +167,23 @@ const HadithCollection = () => {
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
+
             <div className="text-center flex-1 min-w-0">
               <h3 className="font-heading text-base font-bold text-foreground truncate">{selectedBook.name}</h3>
               <p className="font-urdu text-sm text-accent" dir="rtl">{selectedBook.nameUrdu}</p>
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex items-center gap-2">
+              {/* Language toggle */}
+              <button
+                onClick={() => setLang(lang === "en" ? "ur" : "en")}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary border border-border text-xs font-body font-medium hover:bg-primary/5 transition-colors"
+                title={lang === "en" ? "Switch to Urdu" : "Switch to English"}
+              >
+                <Languages className="w-3.5 h-3.5 text-primary" />
+                <span className="text-foreground">{lang === "en" ? "EN" : "اردو"}</span>
+              </button>
+
               <input
                 type="number"
                 placeholder="Hadith #"
@@ -186,22 +211,24 @@ const HadithCollection = () => {
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
             {hadiths.map((h) => (
               <div key={h.id} className="p-4 sm:p-5 rounded-xl bg-secondary/50 border border-border/50">
-                <div className="flex items-start gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-3">
                   <span className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-bold shrink-0 font-body">
                     {h.id}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    {h.header && (
-                      <p className="text-xs text-muted-foreground font-body mb-1 italic">{h.header}</p>
-                    )}
-                    {h.book && (
-                      <p className="text-[10px] text-muted-foreground/60 font-body">{h.book} {h.refno && `• ${h.refno}`}</p>
-                    )}
-                  </div>
+                  <p className="text-[11px] text-muted-foreground/60 font-body">
+                    {selectedBook.name} • Hadith #{h.id}
+                  </p>
                 </div>
-                <p className="text-sm leading-relaxed text-foreground font-body">
-                  {h.hadith_english}
-                </p>
+
+                {lang === "en" ? (
+                  <p className="text-sm leading-relaxed text-foreground font-body">
+                    {h.textEn || <span className="text-muted-foreground italic">English translation not available</span>}
+                  </p>
+                ) : (
+                  <p className="text-base leading-loose text-foreground font-urdu" dir="rtl">
+                    {h.textUr || <span className="text-muted-foreground italic">اردو ترجمہ دستیاب نہیں</span>}
+                  </p>
+                )}
               </div>
             ))}
 
