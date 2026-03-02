@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
-import { Clock } from "lucide-react";
+import { Clock, Moon, Sunrise, Sun, CloudSun, Sunset, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const prayerNames: { key: string; label: string; urdu: string; icon: string }[] = [
-  { key: "Fajr", label: "Fajr", urdu: "فجر", icon: "🌙" },
-  { key: "Sunrise", label: "Sunrise", urdu: "طلوع", icon: "🌅" },
-  { key: "Dhuhr", label: "Dhuhr", urdu: "ظہر", icon: "☀️" },
-  { key: "Asr", label: "Asr", urdu: "عصر", icon: "🌤" },
-  { key: "Maghrib", label: "Maghrib", urdu: "مغرب", icon: "🌇" },
-  { key: "Isha", label: "Isha", urdu: "عشاء", icon: "🌃" },
+const prayerNames = [
+  { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
+  { key: "Sunrise", label: "Sunrise", urdu: "طلوع", Icon: Sunrise },
+  { key: "Dhuhr", label: "Dhuhr", urdu: "ظہر", Icon: Sun },
+  { key: "Asr", label: "Asr", urdu: "عصر", Icon: CloudSun },
+  { key: "Maghrib", label: "Maghrib", urdu: "مغرب", Icon: Sunset },
+  { key: "Isha", label: "Isha", urdu: "عشاء", Icon: Star },
 ];
 
 function parseTimeToMinutes(time12: string): number {
@@ -65,6 +65,7 @@ const PrayerTimesCard = () => {
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
+          const IconComp = p.Icon;
           return (
             <div
               key={p.key}
@@ -72,7 +73,7 @@ const PrayerTimesCard = () => {
                 isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md"
               }`}
             >
-              <div className="text-2xl mb-1">{p.icon}</div>
+              <IconComp className={`w-6 h-6 mx-auto mb-2 ${isNext ? "text-primary" : "text-accent"}`} />
               <p className="font-urdu text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
               <p className="font-heading font-semibold text-foreground text-xs mb-1.5">{p.label}</p>
               {isLoading ? (
@@ -81,7 +82,7 @@ const PrayerTimesCard = () => {
                 <p className="text-destructive text-[10px]">Error</p>
               ) : (
                 <>
-                  <p className={`font-body font-bold text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
+                  <p className={`font-body font-bold text-base sm:text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
                     {data?.prayers[p.key as keyof typeof data.prayers]}
                   </p>
                   {isNext && data?.prayers && (
