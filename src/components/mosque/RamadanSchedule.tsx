@@ -49,7 +49,7 @@ const RamadanSchedule = () => {
   if (!ramadanActive) return null;
 
   return (
-    <section className="px-4 max-w-4xl mx-auto">
+    <section id="ramadan" className="px-4 max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Moon className="w-5 h-5 text-accent" />
         <h2 className="font-heading text-2xl font-bold text-foreground">Ramadan Schedule</h2>
@@ -92,11 +92,11 @@ const RamadanSchedule = () => {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-card border-b border-border">
               <tr>
-                <th className="px-4 py-3 text-left font-heading font-semibold text-muted-foreground">Day</th>
-                <th className="px-4 py-3 text-left font-heading font-semibold text-muted-foreground">Date</th>
-                <th className="px-4 py-3 text-left font-heading font-semibold text-muted-foreground">ایام</th>
-                <th className="px-4 py-3 text-center font-heading font-semibold text-muted-foreground">Sehri</th>
-                <th className="px-4 py-3 text-center font-heading font-semibold text-muted-foreground">Iftar</th>
+                <th className="px-3 sm:px-4 py-3 text-left font-heading font-semibold text-muted-foreground">Day</th>
+                <th className="px-3 sm:px-4 py-3 text-left font-heading font-semibold text-muted-foreground">Date</th>
+                <th className="px-3 sm:px-4 py-3 text-left font-heading font-semibold text-muted-foreground hidden sm:table-cell">ایام</th>
+                <th className="px-3 sm:px-4 py-3 text-center font-heading font-semibold text-muted-foreground">Sehri</th>
+                <th className="px-3 sm:px-4 py-3 text-center font-heading font-semibold text-muted-foreground">Iftar</th>
               </tr>
             </thead>
             <tbody>
@@ -109,13 +109,13 @@ const RamadanSchedule = () => {
                       isToday ? "ramadan-today font-semibold" : "hover:bg-secondary/30"
                     }`}
                   >
-                    <td className="px-4 py-2.5 font-heading">{d.day}</td>
-                    <td className="px-4 py-2.5">
+                    <td className="px-3 sm:px-4 py-2.5 font-heading">{d.day}</td>
+                    <td className="px-3 sm:px-4 py-2.5">
                       {new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </td>
-                    <td className="px-4 py-2.5 font-arabic text-right">{d.dayNameUrdu}</td>
-                    <td className="px-4 py-2.5 text-center font-heading">{d.sehri}</td>
-                    <td className={`px-4 py-2.5 text-center font-heading ${isToday ? "text-accent" : ""}`}>
+                    <td className="px-3 sm:px-4 py-2.5 font-arabic text-right hidden sm:table-cell">{d.dayNameUrdu}</td>
+                    <td className="px-3 sm:px-4 py-2.5 text-center font-heading">{d.sehri}</td>
+                    <td className={`px-3 sm:px-4 py-2.5 text-center font-heading ${isToday ? "text-accent" : ""}`}>
                       {d.iftar}
                     </td>
                   </tr>

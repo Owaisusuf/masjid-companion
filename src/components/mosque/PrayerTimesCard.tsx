@@ -15,11 +15,11 @@ const PrayerTimesCard = () => {
   const { data, isLoading, isError } = usePrayerTimes();
 
   return (
-    <section className="px-4 max-w-4xl mx-auto">
+    <section id="prayers" className="px-4 max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Clock className="w-5 h-5 text-primary" />
         <h2 className="font-heading text-2xl font-bold text-foreground">Prayer Times</h2>
-        <span className="font-arabic text-lg text-muted-foreground mr-2">أوقات الصلاة</span>
+        <span className="font-arabic text-lg text-muted-foreground">اوقات الصلاة</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
