@@ -17,6 +17,8 @@ export default {
         heading: ["Outfit", "sans-serif"],
         body: ["DM Sans", "sans-serif"],
         arabic: ["Amiri", "serif"],
+        urdu: ["Noto Nastaliq Urdu", "Amiri", "serif"],
+        quran: ["Amiri Quran", "Amiri", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",

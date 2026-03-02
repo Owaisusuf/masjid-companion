@@ -48,7 +48,7 @@ const NamesOfAllah = () => {
             </div>
             <p className="font-heading text-sm font-semibold text-foreground">{name.transliteration}</p>
             <p className="text-xs text-muted-foreground">{name.english}</p>
-            <p className="font-arabic text-sm text-muted-foreground mt-1" dir="rtl">{name.urdu}</p>
+            <p className="font-urdu text-sm text-muted-foreground mt-1 leading-[2]" dir="rtl">{name.urdu}</p>
           </div>
         ))}
       </div>
