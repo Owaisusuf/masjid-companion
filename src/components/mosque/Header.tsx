@@ -26,11 +26,11 @@ const Header = () => {
 
       <div className="relative z-10 text-center px-4 py-12 max-w-2xl mx-auto">
         {/* Bismillah */}
-        <p className="font-quran text-3xl sm:text-4xl md:text-5xl text-white/90 mb-6 leading-relaxed" dir="rtl">
+        <p className="font-quran text-3xl sm:text-4xl md:text-5xl text-white/90 mb-10 leading-relaxed" dir="rtl">
           بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
         </p>
 
-        <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-white tracking-tight">
+        <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">
           Jamia Masjid Shareef
         </h1>
         <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-4" dir="rtl">

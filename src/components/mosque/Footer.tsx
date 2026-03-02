@@ -1,4 +1,4 @@
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin, ExternalLink, Heart } from "lucide-react";
 
 const Footer = () => {
   const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
@@ -36,6 +36,10 @@ const Footer = () => {
         </p>
         <p className="text-center text-xs text-muted-foreground/60 mt-1">
           © {new Date().getFullYear()} Jamia Masjid Shareef Old Barzulla Srinagar
+        </p>
+        <p className="text-center text-xs text-muted-foreground/50 mt-3 flex items-center justify-center gap-1">
+          Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> by{" "}
+          <span className="font-medium text-foreground/60">Owais Yousuf</span>
         </p>
       </div>
     </footer>
