@@ -10,6 +10,7 @@ import NamesOfAllah from "@/components/mosque/NamesOfAllah";
 import TasbihCounter from "@/components/mosque/TasbihCounter";
 import DailyHadith from "@/components/mosque/DailyHadith";
 import Footer from "@/components/mosque/Footer";
+import PrayerAlarm from "@/components/mosque/PrayerAlarm";
 
 const SectionDivider = () => (
   <div className="flex items-center justify-center py-3">
@@ -42,6 +43,7 @@ const Index = () => {
         <TasbihCounter />
       </div>
       <Footer />
+      <PrayerAlarm />
     </main>
   );
 };
