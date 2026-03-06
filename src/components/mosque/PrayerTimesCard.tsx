@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
-import { Clock, Moon, Sunrise, Sun, CloudSun, Sunset, Star } from "lucide-react";
+import { Clock, Moon, Sunrise, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const prayerNames = [
   { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
-  { key: "Sunrise", label: "Sunrise", urdu: "طلوع", Icon: Sunrise },
-  { key: "Dhuhr", label: "Dhuhr", urdu: "ظہر", Icon: Sun },
+  { key: "Sunrise", label: "Sunrise", urdu: "طلوع آفتاب", Icon: Sunrise },
+  { key: "Dhuhr", label: "Zuhr", urdu: "ظہر", Icon: Sun },
   { key: "Asr", label: "Asr", urdu: "عصر", Icon: CloudSun },
   { key: "Maghrib", label: "Maghrib", urdu: "مغرب", Icon: Sunset },
   { key: "Isha", label: "Isha", urdu: "عشاء", Icon: Star },
@@ -62,6 +62,30 @@ const PrayerTimesCard = () => {
         <span className="font-urdu text-sm text-muted-foreground">اوقاتِ نماز</span>
       </div>
 
+      {/* Date display */}
+      {data?.gregorian && data?.hijri && (
+        <div className="glass-card p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4 text-primary shrink-0" />
+            <span className="font-heading font-semibold text-foreground">
+              {data.gregorian.weekday}, {data.gregorian.day} {data.gregorian.month} {data.gregorian.year}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-heading font-semibold text-primary">
+              {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
+            </span>
+            <span className="font-arabic text-accent text-sm">— {data.hijri.monthAr}</span>
+          </div>
+        </div>
+      )}
+
+      {isLoading && !data && (
+        <div className="glass-card p-4 mb-4">
+          <Skeleton className="h-6 w-64 mx-auto" />
+        </div>
+      )}
+
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
@@ -96,6 +120,10 @@ const PrayerTimesCard = () => {
           );
         })}
       </div>
+
+      <p className="text-center text-[10px] text-muted-foreground/50 mt-3 font-body">
+        Shafi method • Fajr 18° • Isha 18° • Auto-updated daily
+      </p>
     </section>
   );
 };
