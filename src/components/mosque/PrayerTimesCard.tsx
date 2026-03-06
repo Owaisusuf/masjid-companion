@@ -48,7 +48,7 @@ function parseTimeToMinutes(time12: string): number {
 function getNextPrayer(prayers: Record<string, string>): string | null {
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const order = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+  const order = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
   for (const key of order) {
     if (prayers[key] && parseTimeToMinutes(prayers[key]) > nowMinutes) return key;
   }
