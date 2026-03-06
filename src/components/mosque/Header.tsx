@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import kalimaImg from "@/assets/kalima-calligraphy.png";
 
+
 const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
 
 const Header = () => {
