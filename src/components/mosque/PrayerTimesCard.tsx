@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
-import { Clock, Moon, Sunrise, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
+import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
