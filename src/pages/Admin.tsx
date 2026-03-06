@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Lock, Save, ArrowLeft, Settings, Clock, Megaphone, Plus, Trash2, Image, ToggleLeft, ToggleRight, Calendar } from "lucide-react";
+import { Shield, Lock, Save, ArrowLeft, Settings, Clock, Megaphone, Plus, Trash2, Image, ToggleLeft, ToggleRight, Calendar, X } from "lucide-react";
 import { loadPrayerConfig, savePrayerConfig, getDefaultAutoTimes, type PrayerConfig } from "@/lib/prayerStore";
 import { loadAnnouncements, saveAnnouncements, getDefaultAnnouncement, type Announcement } from "@/lib/announcementStore";
 import { toast } from "@/hooks/use-toast";
