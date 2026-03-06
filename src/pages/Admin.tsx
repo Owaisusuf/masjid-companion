@@ -4,7 +4,7 @@ import { Shield, Lock, Save, ArrowLeft, Settings, Clock, Megaphone, Plus, Trash2
 import { loadPrayerConfig, savePrayerConfig, getDefaultAutoTimes, type PrayerConfig } from "@/lib/prayerStore";
 import { loadAnnouncements, saveAnnouncements, getDefaultAnnouncement, type Announcement } from "@/lib/announcementStore";
 import { toast } from "@/hooks/use-toast";
-import eventImage from "@/assets/event-deeni-ijtema.jpg";
+
 
 const ADMIN_PASSWORD = "jamia@masjid";
 
@@ -33,24 +33,7 @@ const Admin = () => {
 
   useEffect(() => {
     if (authenticated) {
-      const loaded = loadAnnouncements();
-      // If no announcements exist, seed with the default event
-      if (loaded.length === 0) {
-        const defaultEvent: Announcement = {
-          id: "deeni-ijtema-2026",
-          title: "Deeni Ijtema — دینی اجتماع",
-          titleUrdu: "بروز اتوار بعد نماز عصر تا مغرب — جامع مسجد اولڈ برزلہ",
-          description: "Sunday, 8th March 2026 — After Asr Prayer at Jamia Masjid Old Barzulla",
-          imageUrl: eventImage,
-          startDate: "2026-03-06",
-          endDate: "2026-03-09",
-          active: true,
-        };
-        saveAnnouncements([defaultEvent]);
-        setAnnouncements([defaultEvent]);
-      } else {
-        setAnnouncements(loaded);
-      }
+      setAnnouncements(loadAnnouncements());
     }
   }, [authenticated]);
 
