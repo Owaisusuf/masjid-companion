@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { BookOpen, ArrowLeft, Loader2, Search, BookMarked, Languages } from "lucide-react";
+import { BookOpen, ArrowLeft, Loader2, Search, BookMarked } from "lucide-react";
 
 interface HadithBook {
   key: string;
@@ -11,8 +11,7 @@ interface HadithBook {
 
 interface HadithItem {
   id: number;
-  textEn: string;
-  textUr: string;
+  text: string;
 }
 
 const hadithBooks: HadithBook[] = [
@@ -32,9 +31,7 @@ const HadithCollection = () => {
   const [hasMore, setHasMore] = useState(true);
   const [searchNum, setSearchNum] = useState("");
   const [error, setError] = useState("");
-  const [lang, setLang] = useState<"en" | "ur">("en");
-  const [allEnData, setAllEnData] = useState<Record<number, string>>({});
-  const [allUrData, setAllUrData] = useState<Record<number, string>>({});
+  const [allData, setAllData] = useState<Record<number, string>>({});
   const [bookLoaded, setBookLoaded] = useState(false);
 
   const PER_PAGE = 10;
@@ -44,42 +41,27 @@ const HadithCollection = () => {
     setError("");
     setBookLoaded(false);
     try {
-      const [enRes, urRes] = await Promise.all([
-        fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-${book.key}.min.json`),
-        fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/urd-${book.key}.min.json`),
-      ]);
+      const res = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-${book.key}.min.json`);
+      const dataMap: Record<number, string> = {};
 
-      const enMap: Record<number, string> = {};
-      const urMap: Record<number, string> = {};
-
-      if (enRes.ok) {
-        const enJson = await enRes.json();
-        const enHadiths = enJson?.hadiths || [];
-        enHadiths.forEach((h: { hadithnumber: number; text: string }, i: number) => {
-          enMap[h.hadithnumber || i + 1] = h.text || "";
+      if (res.ok) {
+        const json = await res.json();
+        const items = json?.hadiths || [];
+        items.forEach((h: { hadithnumber: number; text: string }, i: number) => {
+          dataMap[h.hadithnumber || i + 1] = h.text || "";
         });
       }
 
-      if (urRes.ok) {
-        const urJson = await urRes.json();
-        const urHadiths = urJson?.hadiths || [];
-        urHadiths.forEach((h: { hadithnumber: number; text: string }, i: number) => {
-          urMap[h.hadithnumber || i + 1] = h.text || "";
-        });
-      }
-
-      setAllEnData(enMap);
-      setAllUrData(urMap);
+      setAllData(dataMap);
       setBookLoaded(true);
 
-      // Build first page
-      const items: HadithItem[] = [];
-      const maxNum = Math.max(Object.keys(enMap).length, Object.keys(urMap).length);
+      const pageItems: HadithItem[] = [];
+      const maxNum = Object.keys(dataMap).length;
       for (let i = 1; i <= Math.min(PER_PAGE, maxNum); i++) {
-        items.push({ id: i, textEn: enMap[i] || "", textUr: urMap[i] || "" });
+        if (dataMap[i]) pageItems.push({ id: i, text: dataMap[i] });
       }
-      setHadiths(items);
-      setHasMore(items.length === PER_PAGE && PER_PAGE < maxNum);
+      setHadiths(pageItems);
+      setHasMore(pageItems.length === PER_PAGE && PER_PAGE < maxNum);
     } catch {
       setError("Failed to load hadiths. Please try again.");
     }
@@ -99,10 +81,10 @@ const HadithCollection = () => {
     const nextPage = page + 1;
     setPage(nextPage);
     const start = (nextPage - 1) * PER_PAGE + 1;
-    const maxNum = Math.max(Object.keys(allEnData).length, Object.keys(allUrData).length);
+    const maxNum = Object.keys(allData).length;
     const items: HadithItem[] = [];
     for (let i = start; i < start + PER_PAGE && i <= maxNum; i++) {
-      items.push({ id: i, textEn: allEnData[i] || "", textUr: allUrData[i] || "" });
+      if (allData[i]) items.push({ id: i, text: allData[i] });
     }
     setHadiths(prev => [...prev, ...items]);
     setHasMore(start + PER_PAGE <= maxNum);
@@ -115,13 +97,12 @@ const HadithCollection = () => {
       setError("Please enter a valid hadith number");
       return;
     }
-    const en = allEnData[num];
-    const ur = allUrData[num];
-    if (!en && !ur) {
+    const text = allData[num];
+    if (!text) {
       setError("Hadith not found. Try a different number.");
       return;
     }
-    setHadiths([{ id: num, textEn: en || "", textUr: ur || "" }]);
+    setHadiths([{ id: num, text }]);
     setHasMore(false);
     setError("");
   };
@@ -155,7 +136,6 @@ const HadithCollection = () => {
         </div>
       ) : (
         <div className="glass-card p-4 sm:p-6">
-          {/* Toolbar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
             <button
               onClick={() => { setSelectedBook(null); setHadiths([]); setError(""); setBookLoaded(false); }}
@@ -170,15 +150,6 @@ const HadithCollection = () => {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setLang(lang === "en" ? "ur" : "en")}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary border border-border text-xs font-body font-medium hover:bg-primary/5 transition-colors"
-                title={lang === "en" ? "Switch to Urdu" : "Switch to English"}
-              >
-                <Languages className="w-3.5 h-3.5 text-primary" />
-                <span className="text-foreground">{lang === "en" ? "English" : "اردو"}</span>
-              </button>
-
               {bookLoaded && (
                 <>
                   <input
@@ -206,7 +177,6 @@ const HadithCollection = () => {
             </div>
           )}
 
-          {/* Hadith list */}
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
             {hadiths.map((h) => (
               <div key={h.id} className="p-4 sm:p-5 rounded-xl bg-secondary/50 border border-border/50">
@@ -218,16 +188,9 @@ const HadithCollection = () => {
                     {selectedBook.name} • Hadith #{h.id}
                   </p>
                 </div>
-
-                {lang === "en" ? (
-                  <p className="text-sm leading-relaxed text-foreground font-body">
-                    {h.textEn || <span className="text-muted-foreground italic">English translation not available</span>}
-                  </p>
-                ) : (
-                  <p className="text-base leading-loose text-foreground font-urdu" dir="rtl">
-                    {h.textUr || <span className="text-muted-foreground italic">اردو ترجمہ دستیاب نہیں</span>}
-                  </p>
-                )}
+                <p className="text-sm leading-relaxed text-foreground font-body">
+                  {h.text || <span className="text-muted-foreground italic">Translation not available</span>}
+                </p>
               </div>
             ))}
 
@@ -246,7 +209,7 @@ const HadithCollection = () => {
                 onClick={loadMore}
                 className="w-full py-3 rounded-xl bg-secondary border border-border text-sm text-primary font-body font-medium hover:bg-primary/5 transition-colors"
               >
-                Load More Hadiths — مزید احادیث
+                Load More Hadiths
               </button>
             )}
           </div>
