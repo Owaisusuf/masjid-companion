@@ -1,5 +1,6 @@
 import Navigation from "@/components/mosque/Navigation";
 import Header from "@/components/mosque/Header";
+import AnnouncementPopup from "@/components/mosque/AnnouncementPopup";
 import PrayerTimesCard from "@/components/mosque/PrayerTimesCard";
 import RamadanSchedule from "@/components/mosque/RamadanSchedule";
 import QuranBrowser from "@/components/mosque/QuranBrowser";
