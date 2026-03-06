@@ -16,7 +16,7 @@ const Footer = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground mb-5">
           <div className="flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-primary" />
-            <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
+            <span>3Q2X+VW6, Old Barzallah, Srinagar, Jammu and Kashmir 190005</span>
           </div>
           <a
             href={mapUrl}
