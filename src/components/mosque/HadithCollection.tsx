@@ -49,11 +49,10 @@ const PRIMARY_COLLECTIONS = [
 ];
 
 const SECONDARY_COLLECTIONS = [
-  { key: "nawawi40", name: "40 Hadith Nawawi", arabic: "الأربعون النووية", hadiths: 42, intro: "An-Nawawi's Forty Hadith are forty-two (actually forty-two, but commonly referred to as 'forty') hadith collected by Imam Yahya ibn Sharaf an-Nawawi." },
-  { key: "riyadussalihin", name: "Riyad as-Salihin", arabic: "رياض الصالحين", hadiths: 1896, intro: "Riyad as-Salihin by Imam an-Nawawi is a book of hadith covering various topics from the Sunnah." },
-  { key: "adab", name: "Al-Adab Al-Mufrad", arabic: "الأدب المفرد", hadiths: 1322, intro: "Al-Adab Al-Mufrad is a hadith collection focused on etiquettes and morals, compiled by Imam al-Bukhari." },
-  { key: "bulugh", name: "Bulugh al-Maram", arabic: "بلوغ المرام", hadiths: 1358, intro: "Bulugh al-Maram is a collection of hadith pertaining to jurisprudence compiled by Imam Ibn Hajar al-Asqalani." },
-  { key: "qudsi40", name: "40 Hadith Qudsi", arabic: "الأحاديث القدسية", hadiths: 40, intro: "Hadith Qudsi are from amongst the ahadith that narrate words of Allah that were not revealed as part of the Qur'an." },
+  { key: "nawawi", name: "40 Hadith Nawawi", arabic: "الأربعون النووية", hadiths: 42, intro: "An-Nawawi's Forty Hadith are forty-two hadith collected by Imam Yahya ibn Sharaf an-Nawawi." },
+  { key: "qudsi", name: "40 Hadith Qudsi", arabic: "الأحاديث القدسية", hadiths: 40, intro: "Hadith Qudsi are from amongst the ahadith that narrate words of Allah that were not revealed as part of the Qur'an." },
+  { key: "malik", name: "Muwatta Malik", arabic: "موطأ مالك", hadiths: 1832, intro: "Muwatta Imam Malik is the earliest written collection of hadith comprising the subjects of Islamic law, compiled by Imam Malik ibn Anas (d. 179 AH/795 AD)." },
+  { key: "dehlawi", name: "40 Hadith Shah Waliullah", arabic: "أربعون حديث دهلوي", hadiths: 40, intro: "Forty Hadith compiled by Shah Waliullah Dehlawi, a renowned Islamic scholar from the Indian subcontinent." },
 ];
 
 const API_BASE = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1";
