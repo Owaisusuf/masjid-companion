@@ -4,7 +4,6 @@ import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import kalimaImg from "@/assets/kalima-calligraphy.png";
 
-
 const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
 
 const Header = () => {
@@ -13,7 +12,7 @@ const Header = () => {
   const ramadanActive = isRamadan();
 
   return (
-    <header className="relative min-h-[480px] sm:min-h-[540px] flex items-center justify-center overflow-hidden">
+    <header className="relative min-h-[440px] sm:min-h-[500px] flex items-center justify-center overflow-hidden">
       <img
         src={heroBg}
         alt=""
@@ -21,54 +20,54 @@ const Header = () => {
         loading="eager"
       />
       <div className="absolute inset-0 hero-overlay" />
-      
+
       <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
-      <div className="relative z-10 text-center px-4 pt-6 pb-12 max-w-2xl mx-auto">
-        <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">
-          Jamia Masjid Shareef
-        </h1>
-        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-6" dir="rtl">
-          جامع مسجد شریف
-        </p>
-
-        <p className="text-white/60 text-sm font-body tracking-widest uppercase mb-6">
-          Your Local Prayer Companion
-        </p>
-
-        {/* Kalima Calligraphy Image */}
-        <div className="mb-6">
+      <div className="relative z-10 text-center px-4 pt-4 pb-10 max-w-2xl mx-auto">
+        {/* Kalima - Top Center, Large */}
+        <div className="mb-5">
           <img
             src={kalimaImg}
             alt="لا إله إلا الله محمد رسول الله"
-            className="mx-auto h-20 sm:h-28 md:h-36 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] brightness-110"
+            className="mx-auto h-24 sm:h-32 md:h-40 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.35)] brightness-110"
           />
         </div>
-        
+
+        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-white tracking-tight">
+          Jamia Masjid Shareef
+        </h1>
+        <p className="font-urdu text-xl sm:text-2xl text-amber-300 mb-4" dir="rtl">
+          جامع مسجد شریف
+        </p>
+
+        <p className="text-white/60 text-xs font-body tracking-widest uppercase mb-5">
+          Your Local Prayer Companion
+        </p>
+
         <a
           href={mapUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm mb-6"
+          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-5"
         >
-          <MapPin className="w-4 h-4" />
+          <MapPin className="w-3.5 h-3.5" />
           <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
         </a>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-1">
           {data?.hijri && (
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-              <span className="font-arabic text-base text-amber-300">{data.hijri.monthAr}</span>
-              <span className="text-white font-heading font-semibold text-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <span className="font-arabic text-sm text-amber-300">{data.hijri.monthAr}</span>
+              <span className="text-white font-heading font-semibold text-xs">
                 {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
               </span>
             </div>
           )}
 
           {ramadanActive && todayRamadan && (
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
-              <span className="text-amber-300 font-heading font-semibold text-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
+              <span className="text-amber-300 font-heading font-semibold text-xs">
                 ☪ Ramadan Mubarak — Day {todayRamadan.day}
               </span>
             </div>

@@ -23,7 +23,7 @@ const Index = () => {
     <main className="min-h-screen bg-background islamic-pattern">
       <Navigation />
       <Header />
-      <div className="space-y-10 py-10">
+      <div className="space-y-8 sm:space-y-10 py-8 sm:py-10">
         <PrayerTimesCard />
         <SectionDivider />
         <RamadanSchedule />

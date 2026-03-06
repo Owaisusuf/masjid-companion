@@ -68,14 +68,14 @@ const PrayerTimesCard = () => {
       </div>
 
       {data?.gregorian && data?.hijri ? (
-        <div className="glass-card p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm">
+        <div className="glass-card p-3 sm:p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
             <span className="font-heading font-semibold text-foreground">
               {data.gregorian.weekday}, {data.gregorian.day} {data.gregorian.month} {data.gregorian.year}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
             <span className="font-heading font-semibold text-primary">
               {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
             </span>
@@ -88,7 +88,8 @@ const PrayerTimesCard = () => {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-5 gap-3">
+      {/* Mobile: 2 cols top + 3 cols bottom. Desktop: 5 cols */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;
@@ -96,13 +97,13 @@ const PrayerTimesCard = () => {
           return (
             <div
               key={p.key}
-              className={`glass-card p-4 text-center transition-all duration-300 ${
+              className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 ${
                 isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md"
-              }`}
+              } ${p.key === "Isha" ? "col-span-2 sm:col-span-1" : ""}`}
             >
-              <IconComp className={`w-6 h-6 mx-auto mb-2 ${isNext ? "text-primary" : "text-accent"}`} />
-              <p className="font-urdu text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
-              <p className="font-heading font-semibold text-foreground text-xs mb-1.5">{p.label}</p>
+              <IconComp className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${isNext ? "text-primary" : "text-accent"}`} />
+              <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
+              <p className="font-heading font-semibold text-foreground text-xs mb-1">{p.label}</p>
               <p className={`font-body font-bold text-base sm:text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
                 {time}
               </p>
