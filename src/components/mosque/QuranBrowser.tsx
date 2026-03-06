@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked } from "lucide-react";
 
 interface Surah {
   number: number;
@@ -10,30 +10,48 @@ interface Surah {
   revelationType: string;
 }
 
-interface Ayah {
-  number: number;
-  numberInSurah: number;
+interface Verse {
+  chapter: number;
+  verse: number;
   text: string;
 }
+
+const QURAN_API = "https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1";
+
+const EDITIONS = {
+  arabic: { key: "ara-quranuthmanihaf", label: "عربی", author: "Uthmani Hafs" },
+  english: [
+    { key: "eng-mustafakhattaba", label: "Mustafa Khattab (The Clear Quran)" },
+    { key: "eng-abdullahyusufal", label: "Abdullah Yusuf Ali" },
+    { key: "eng-mohammedmarmadu", label: "Pickthall" },
+    { key: "eng-muftitaqiusmani", label: "Mufti Taqi Usmani" },
+  ],
+  urdu: [
+    { key: "alquran:ur.jalandhry", label: "Fateh Muhammad Jalandhry", api: "alquran" },
+  ],
+};
+
+// alquran.cloud API for surah metadata and Urdu (fawazahmed0 CDN has size limits on urdu editions)
+const ALQURAN_API = "https://api.alquran.cloud/v1";
 
 const juzData = Array.from({ length: 30 }, (_, i) => ({ number: i + 1 }));
 
 const QuranBrowser = () => {
   const [surahs, setSurahs] = useState<Surah[]>([]);
   const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
-  const [ayahs, setAyahs] = useState<Ayah[]>([]);
-  const [englishAyahs, setEnglishAyahs] = useState<Ayah[]>([]);
-  const [urduAyahs, setUrduAyahs] = useState<Ayah[]>([]);
+  const [arabicVerses, setArabicVerses] = useState<Verse[]>([]);
+  const [englishVerses, setEnglishVerses] = useState<Verse[]>([]);
+  const [urduVerses, setUrduVerses] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(false);
   const [surahsLoading, setSurahsLoading] = useState(true);
-  const [showTranslation, setShowTranslation] = useState<"arabic" | "english" | "urdu" | "both">("both");
+  const [displayMode, setDisplayMode] = useState<"all" | "arabic" | "english" | "urdu">("all");
   const [browseMode, setBrowseMode] = useState<"surah" | "juz">("surah");
   const [search, setSearch] = useState("");
-  const [juzAyahs, setJuzAyahs] = useState<{ arabic: Ayah[]; english: Ayah[]; urdu: Ayah[] } | null>(null);
   const [selectedJuz, setSelectedJuz] = useState<number | null>(null);
+  const [selectedEnglish, setSelectedEnglish] = useState(EDITIONS.english[0].key);
 
   useEffect(() => {
-    fetch("https://api.alquran.cloud/v1/surah")
+    fetch(`${ALQURAN_API}/surah`)
       .then((r) => r.json())
       .then((d) => setSurahs(d.data))
       .catch(console.error)
@@ -48,20 +66,60 @@ const QuranBrowser = () => {
       s.number.toString() === search
   );
 
+  const fetchEdition = useCallback(async (edition: string, chapterOrJuz: number, type: "surah" | "juz"): Promise<Verse[]> => {
+    try {
+      // Use fawazahmed0 API for Arabic and English
+      const url = `${QURAN_API}/editions/${edition}/${chapterOrJuz}.min.json`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("CDN failed");
+      const data = await res.json();
+      return data.chapter || [];
+    } catch {
+      // Fallback to alquran.cloud
+      try {
+        const path = type === "surah" ? `surah/${chapterOrJuz}` : `juz/${chapterOrJuz}`;
+        const identifier = edition === "ara-quranuthmanihaf" ? "quran-uthmani" : "en.sahih";
+        const res = await fetch(`${ALQURAN_API}/${path}/${identifier}`);
+        const data = await res.json();
+        return data.data.ayahs.map((a: any) => ({
+          chapter: a.surah?.number || chapterOrJuz,
+          verse: a.numberInSurah,
+          text: a.text,
+        }));
+      } catch {
+        return [];
+      }
+    }
+  }, []);
+
+  const fetchUrdu = useCallback(async (chapterOrJuz: number, type: "surah" | "juz"): Promise<Verse[]> => {
+    try {
+      const path = type === "surah" ? `surah/${chapterOrJuz}` : `juz/${chapterOrJuz}`;
+      const res = await fetch(`${ALQURAN_API}/${path}/ur.jalandhry`);
+      const data = await res.json();
+      return data.data.ayahs.map((a: any) => ({
+        chapter: a.surah?.number || chapterOrJuz,
+        verse: a.numberInSurah,
+        text: a.text,
+      }));
+    } catch {
+      return [];
+    }
+  }, []);
+
   const loadSurah = async (surah: Surah) => {
     setSelectedSurah(surah);
     setSelectedJuz(null);
-    setJuzAyahs(null);
     setLoading(true);
     try {
-      const [arabicRes, englishRes, urduRes] = await Promise.all([
-        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/quran-uthmani`).then((r) => r.json()),
-        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/en.sahih`).then((r) => r.json()),
-        fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/ur.jalandhry`).then((r) => r.json()),
+      const [arabic, english, urdu] = await Promise.all([
+        fetchEdition(EDITIONS.arabic.key, surah.number, "surah"),
+        fetchEdition(selectedEnglish, surah.number, "surah"),
+        fetchUrdu(surah.number, "surah"),
       ]);
-      setAyahs(arabicRes.data.ayahs);
-      setEnglishAyahs(englishRes.data.ayahs);
-      setUrduAyahs(urduRes.data.ayahs);
+      setArabicVerses(arabic);
+      setEnglishVerses(english);
+      setUrduVerses(urdu);
     } catch (e) {
       console.error(e);
     }
@@ -73,12 +131,14 @@ const QuranBrowser = () => {
     setSelectedSurah(null);
     setLoading(true);
     try {
-      const [arabicRes, englishRes, urduRes] = await Promise.all([
-        fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/quran-uthmani`).then((r) => r.json()),
-        fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/en.sahih`).then((r) => r.json()),
-        fetch(`https://api.alquran.cloud/v1/juz/${juzNumber}/ur.jalandhry`).then((r) => r.json()),
+      const [arabic, english, urdu] = await Promise.all([
+        fetchEdition(EDITIONS.arabic.key, juzNumber, "juz"),
+        fetchEdition(selectedEnglish, juzNumber, "juz"),
+        fetchUrdu(juzNumber, "juz"),
       ]);
-      setJuzAyahs({ arabic: arabicRes.data.ayahs, english: englishRes.data.ayahs, urdu: urduRes.data.ayahs });
+      setArabicVerses(arabic);
+      setEnglishVerses(english);
+      setUrduVerses(urdu);
     } catch (e) {
       console.error(e);
     }
@@ -88,8 +148,9 @@ const QuranBrowser = () => {
   const goBack = () => {
     setSelectedSurah(null);
     setSelectedJuz(null);
-    setAyahs([]);
-    setJuzAyahs(null);
+    setArabicVerses([]);
+    setEnglishVerses([]);
+    setUrduVerses([]);
   };
 
   const isReading = selectedSurah || selectedJuz;
@@ -104,6 +165,12 @@ const QuranBrowser = () => {
 
       {!isReading ? (
         <div className="glass-card p-4 sm:p-6">
+          {/* API source badge */}
+          <div className="flex items-center gap-2 mb-4 text-[10px] text-muted-foreground/60">
+            <BookMarked className="w-3 h-3" />
+            <span>Powered by fawazahmed0/quran-api & Al Quran Cloud</span>
+          </div>
+
           {/* Browse mode toggle */}
           <div className="flex items-center gap-2 mb-4">
             <div className="flex rounded-lg bg-secondary p-0.5">
@@ -186,7 +253,8 @@ const QuranBrowser = () => {
         </div>
       ) : (
         <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          {/* Header controls */}
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <button
               onClick={goBack}
               className="flex items-center gap-1.5 text-primary hover:text-accent transition-colors text-sm font-body font-medium"
@@ -198,7 +266,9 @@ const QuranBrowser = () => {
                 <>
                   <h3 className="font-heading text-base font-bold text-foreground">{selectedSurah.englishName}</h3>
                   <p className="font-arabic text-xl text-accent">{selectedSurah.name}</p>
-                  <p className="text-xs text-muted-foreground">{selectedSurah.englishNameTranslation} • {selectedSurah.numberOfAyahs} Ayahs</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedSurah.englishNameTranslation} • {selectedSurah.numberOfAyahs} Ayahs • {selectedSurah.revelationType}
+                  </p>
                 </>
               )}
               {selectedJuz && (
@@ -208,59 +278,97 @@ const QuranBrowser = () => {
                 </>
               )}
             </div>
+          </div>
+
+          {/* Display mode & translation selector */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
             <div className="flex gap-0.5 rounded-lg bg-secondary p-0.5">
-              {(["arabic", "both", "english", "urdu"] as const).map((t) => (
+              {(["all", "arabic", "english", "urdu"] as const).map((t) => (
                 <button
                   key={t}
-                  onClick={() => setShowTranslation(t)}
+                  onClick={() => setDisplayMode(t)}
                   className={`px-2.5 py-1.5 text-[11px] rounded-md font-body font-medium transition-colors ${
-                    showTranslation === t ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    displayMode === t ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {t === "arabic" ? "عربی" : t === "both" ? "All" : t === "english" ? "EN" : "اردو"}
+                  {t === "arabic" ? "عربی" : t === "all" ? "All" : t === "english" ? "EN" : "اردو"}
                 </button>
               ))}
             </div>
+
+            {(displayMode === "english" || displayMode === "all") && (
+              <div className="flex items-center gap-2">
+                <Languages className="w-3.5 h-3.5 text-muted-foreground" />
+                <select
+                  value={selectedEnglish}
+                  onChange={(e) => setSelectedEnglish(e.target.value)}
+                  className="text-xs bg-secondary border border-border rounded-lg px-2 py-1.5 text-foreground font-body focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  {EDITIONS.english.map((ed) => (
+                    <option key={ed.key} value={ed.key}>{ed.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
+          {/* Bismillah */}
           {selectedSurah && selectedSurah.number !== 1 && selectedSurah.number !== 9 && (
             <p className="font-quran text-2xl text-center text-accent mb-5 py-3 bg-accent/5 rounded-xl" dir="rtl">
-              بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
             </p>
           )}
 
           {loading ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-10 gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground font-body">Loading from Quran API...</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-              {(selectedSurah ? ayahs : juzAyahs?.arabic || []).map((ayah, i) => {
-                const engText = selectedSurah ? englishAyahs[i]?.text : juzAyahs?.english[i]?.text;
-                const urduText = selectedSurah ? urduAyahs[i]?.text : juzAyahs?.urdu[i]?.text;
+              {arabicVerses.map((ayah, i) => {
+                const engText = englishVerses[i]?.text;
+                const urduText = urduVerses[i]?.text;
                 return (
-                  <div key={ayah.number} className="p-4 rounded-xl bg-secondary/40 border border-border/50">
-                    {(showTranslation !== "english" && showTranslation !== "urdu") && (
+                  <div key={`${ayah.chapter}-${ayah.verse}`} className="p-4 rounded-xl bg-secondary/40 border border-border/50">
+                    {/* Arabic text */}
+                    {(displayMode === "arabic" || displayMode === "all") && (
                       <div className="flex items-start gap-3 mb-2">
                         <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 mt-2 font-body">
-                          {ayah.numberInSurah}
+                          {ayah.verse}
                         </span>
                         <p className="font-quran text-xl sm:text-2xl leading-[2.4] text-foreground text-right flex-1" dir="rtl">
                           {ayah.text}
                         </p>
                       </div>
                     )}
-                    {(showTranslation === "english" || showTranslation === "both") && engText && (
-                      <p className="text-sm text-muted-foreground leading-relaxed pl-10 mb-1.5">{ayah.numberInSurah}. {engText}</p>
+                    {/* English translation */}
+                    {(displayMode === "english" || displayMode === "all") && engText && (
+                      <p className="text-sm text-muted-foreground leading-relaxed pl-10 mb-1.5">
+                        {ayah.verse}. {engText}
+                      </p>
                     )}
-                    {(showTranslation === "urdu" || showTranslation === "both") && urduText && (
-                      <p className="font-urdu text-sm text-muted-foreground pl-10" dir="rtl">{urduText}</p>
+                    {/* Urdu translation */}
+                    {(displayMode === "urdu" || displayMode === "all") && urduText && (
+                      <p className="font-urdu text-sm text-muted-foreground pl-10" dir="rtl">
+                        {urduText}
+                      </p>
                     )}
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* Edition info footer */}
+          <div className="mt-4 pt-3 border-t border-border/30">
+            <p className="text-[10px] text-muted-foreground/50 text-center font-body">
+              Arabic: Quran Uthmani Hafs (qurancomplex.gov.sa) • English: {EDITIONS.english.find(e => e.key === selectedEnglish)?.label} • Urdu: Fateh Muhammad Jalandhry
+            </p>
+            <p className="text-[10px] text-muted-foreground/40 text-center font-body mt-1">
+              Source: fawazahmed0/quran-api & api.alquran.cloud
+            </p>
+          </div>
         </div>
       )}
     </section>
