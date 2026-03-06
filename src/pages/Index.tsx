@@ -45,6 +45,7 @@ const Index = () => {
       </div>
       <Footer />
       <PrayerAlarm />
+      <AnnouncementPopup />
     </main>
   );
 };
