@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ramadanSchedule, getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
-import { Utensils, Moon } from "lucide-react";
+import { Moon } from "lucide-react";
 
 function parseTime(timeStr: string): Date {
   const now = new Date();
