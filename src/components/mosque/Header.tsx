@@ -2,6 +2,7 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
 import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import kalimaImg from "@/assets/kalima-calligraphy.png";
 
 const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
 
@@ -24,22 +25,23 @@ const Header = () => {
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
       <div className="relative z-10 text-center px-4 py-12 max-w-2xl mx-auto">
-        {/* Kalima as styled Arabic text */}
-        <p className="font-arabic text-3xl sm:text-4xl md:text-5xl text-amber-300 mb-4 leading-[1.8]" dir="rtl">
-          لَآ اِلٰهَ اِلَّا اللّٰهُ
-        </p>
-        <p className="font-arabic text-2xl sm:text-3xl md:text-4xl text-white/90 mb-10 leading-[1.8]" dir="rtl">
-          مُحَمَّدٌ رَّسُوْلُ اللّٰهِ ﷺ
-        </p>
+        {/* Kalima Calligraphy Image */}
+        <div className="mb-8">
+          <img
+            src={kalimaImg}
+            alt="لا إله إلا الله - La Ilaha Illallah"
+            className="mx-auto h-20 sm:h-28 md:h-32 w-auto object-contain drop-shadow-lg"
+          />
+        </div>
 
         <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">
           Jamia Masjid Shareef
         </h1>
-        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-3" dir="rtl">
+        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-6" dir="rtl">
           جامع مسجد شریف
         </p>
 
-        <p className="text-white/60 text-sm font-body tracking-widest uppercase mb-6">
+        <p className="text-white/60 text-sm font-body tracking-widest uppercase mb-8">
           Your Local Prayer Companion
         </p>
         

@@ -26,7 +26,7 @@ const QiblaFinder = () => {
 
   const findQibla = () => {
     if (!navigator.geolocation) {
-      setError("آپ کے براؤزر میں لوکیشن سپورٹ نہیں ہے");
+      setError("Location is not supported in your browser");
       return;
     }
     setLoading(true);
@@ -38,7 +38,6 @@ const QiblaFinder = () => {
         setLoading(false);
       },
       () => {
-        // Fallback to Srinagar coordinates
         const angle = calculateQibla(34.0522129, 74.7997336);
         setQiblaAngle(Math.round(angle * 10) / 10);
         setLoading(false);
@@ -46,7 +45,6 @@ const QiblaFinder = () => {
     );
   };
 
-  // Device orientation for compass
   useEffect(() => {
     const handler = (e: DeviceOrientationEvent) => {
       if (e.alpha !== null) {
@@ -71,7 +69,6 @@ const QiblaFinder = () => {
       <div className="section-heading">
         <Compass className="w-5 h-5 text-primary shrink-0" />
         <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Qibla Direction</h2>
-        <span className="font-urdu text-sm text-muted-foreground">سمتِ قبلہ</span>
       </div>
 
       <div className="glass-card p-6 sm:p-8 text-center glow-primary">
@@ -80,11 +77,8 @@ const QiblaFinder = () => {
             <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-secondary border-2 border-border flex items-center justify-center">
               <Compass className="w-12 h-12 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground text-sm mb-2 font-body">
+            <p className="text-muted-foreground text-sm mb-5 font-body">
               Find the direction of the Holy Kaaba from your current location
-            </p>
-            <p className="text-muted-foreground text-sm mb-5 max-w-sm mx-auto font-urdu" dir="rtl">
-              اپنے موجودہ مقام سے خانہ کعبہ کی سمت معلوم کریں
             </p>
             <button
               onClick={findQibla}
@@ -92,7 +86,7 @@ const QiblaFinder = () => {
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-              {loading ? "تلاش ہو رہا ہے..." : "قبلہ کی سمت معلوم کریں"}
+              {loading ? "Finding..." : "Find Qibla Direction"}
             </button>
             {error && <p className="text-destructive text-xs mt-3">{error}</p>}
           </div>
@@ -100,12 +94,10 @@ const QiblaFinder = () => {
           <div>
             <div className="relative w-44 h-44 sm:w-52 sm:h-52 mx-auto mb-5">
               <div className="absolute inset-0 rounded-full border-2 border-border bg-secondary/50" />
-              {/* Cardinal directions */}
               <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-body font-bold text-muted-foreground">N</span>
               <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-body font-bold text-muted-foreground">S</span>
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-body font-bold text-muted-foreground">E</span>
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-body font-bold text-muted-foreground">W</span>
-              {/* Needle */}
               <div
                 className="absolute inset-4 flex items-center justify-center transition-transform duration-300"
                 style={{ transform: `rotate(${needleRotation}deg)` }}
@@ -119,19 +111,16 @@ const QiblaFinder = () => {
             </div>
 
             <p className="font-heading text-3xl font-bold text-primary mb-1">{qiblaAngle}°</p>
-            <p className="text-muted-foreground text-sm mb-1 font-body">from North (شمال سے)</p>
-            <p className="text-muted-foreground text-xs mb-3 font-urdu" dir="rtl">
-              قبلہ شریف کی سمت شمال سے {qiblaAngle} درجے ہے
-            </p>
+            <p className="text-muted-foreground text-sm mb-1 font-body">from North</p>
             <p className="font-arabic text-accent text-lg mb-3">🕋 الكعبة المشرفة</p>
             {hasCompass && (
-              <p className="text-[10px] text-primary/70 font-body mb-2">Live compass active — سمت خود بخود اپ ڈیٹ ہو رہی ہے</p>
+              <p className="text-[10px] text-primary/70 font-body mb-2">Live compass active</p>
             )}
             <button
               onClick={findQibla}
-              className="text-xs text-primary hover:text-accent transition-colors underline underline-offset-2"
+              className="text-xs text-primary hover:text-accent transition-colors underline underline-offset-2 font-body"
             >
-              دوبارہ معلوم کریں — Recalculate
+              Recalculate
             </button>
           </div>
         )}

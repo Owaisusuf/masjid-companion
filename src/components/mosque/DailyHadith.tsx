@@ -17,8 +17,11 @@ const DailyHadith = () => {
           {hadith.arabic}
         </p>
         <div className="w-16 h-px bg-accent/30 mx-auto mb-5" />
-        <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-xl mx-auto italic">
+        <p className="text-muted-foreground text-sm leading-relaxed mb-4 max-w-xl mx-auto italic font-body">
           "{hadith.english}"
+        </p>
+        <p className="text-foreground text-base leading-loose mb-5 max-w-xl mx-auto font-urdu" dir="rtl">
+          "{hadith.urdu}"
         </p>
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border">
           <BookOpen className="w-3.5 h-3.5 text-primary" />
