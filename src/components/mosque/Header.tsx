@@ -17,8 +17,8 @@ const Header = () => {
         src={heroBg}
         alt=""
         className="absolute inset-0 w-full h-full object-cover"
-        loading="eager"
-      />
+        loading="eager" />
+      
       <div className="absolute inset-0 hero-overlay" />
 
       <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
@@ -30,8 +30,8 @@ const Header = () => {
           <img
             src={kalimaImg}
             alt="لا إله إلا الله محمد رسول الله"
-            className="mx-auto h-32 sm:h-40 md:h-48 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,255,255,0.35)] brightness-110"
-          />
+            className="mx-auto h-32 sm:h-40 md:h-48 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,255,255,0.35)] brightness-110" />
+          
         </div>
 
         <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 text-white tracking-tight">
@@ -49,33 +49,33 @@ const Header = () => {
           href={mapUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-4"
-        >
+          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-4">
+          
           <MapPin className="w-3.5 h-3.5" />
-          <span>3Q2X+VW6, Old Barzallah, Srinagar, Jammu and Kashmir 190005</span>
+          <span> Old Barzallah, Srinagar, Jammu and Kashmir 190005</span>
         </a>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-1">
-          {data?.hijri && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+          {data?.hijri &&
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
               <span className="font-arabic text-sm text-amber-300">{data.hijri.monthAr}</span>
               <span className="text-white font-heading font-semibold text-xs">
                 {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
               </span>
             </div>
-          )}
+          }
 
-          {ramadanActive && todayRamadan && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
+          {ramadanActive && todayRamadan &&
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
               <span className="text-amber-300 font-heading font-semibold text-xs">
                 ☪ Ramadan Mubarak — Day {todayRamadan.day}
               </span>
             </div>
-          )}
+          }
         </div>
       </div>
-    </header>
-  );
+    </header>);
+
 };
 
 export default Header;
