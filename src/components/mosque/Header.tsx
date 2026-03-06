@@ -25,26 +25,26 @@ const Header = () => {
       <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
-      <div className="relative z-10 text-center px-4 py-12 max-w-2xl mx-auto">
-        {/* Kalima Calligraphy Image */}
-        <div className="mb-10">
-          <img
-            src={kalimaImg}
-            alt="لا إله إلا الله محمد رسول الله"
-            className="mx-auto h-24 sm:h-32 md:h-40 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] brightness-110"
-          />
-        </div>
-
+      <div className="relative z-10 text-center px-4 pt-6 pb-12 max-w-2xl mx-auto">
         <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">
           Jamia Masjid Shareef
         </h1>
-        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-8" dir="rtl">
+        <p className="font-urdu text-2xl sm:text-3xl text-amber-300 mb-6" dir="rtl">
           جامع مسجد شریف
         </p>
 
-        <p className="text-white/60 text-sm font-body tracking-widest uppercase mb-8 mt-2">
+        <p className="text-white/60 text-sm font-body tracking-widest uppercase mb-6">
           Your Local Prayer Companion
         </p>
+
+        {/* Kalima Calligraphy Image */}
+        <div className="mb-6">
+          <img
+            src={kalimaImg}
+            alt="لا إله إلا الله محمد رسول الله"
+            className="mx-auto h-20 sm:h-28 md:h-36 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] brightness-110"
+          />
+        </div>
         
         <a
           href={mapUrl}

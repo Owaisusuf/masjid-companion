@@ -110,7 +110,7 @@ const RamadanSchedule = () => {
                       {new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </td>
                     <td className="px-3 py-2.5 font-body text-sm">{d.dayName}</td>
-                    <td className="px-3 py-2.5 font-urdu text-right hidden sm:table-cell text-sm">{d.dayNameUrdu}</td>
+                    <td className="px-3 py-2.5 font-urdu text-center hidden sm:table-cell text-sm" dir="rtl">{d.dayNameUrdu}</td>
                     <td className="px-3 py-2.5 text-center font-body text-sm">{d.sehri}</td>
                     <td className={`px-3 py-2.5 text-center font-body text-sm ${isToday ? "text-accent font-bold" : ""}`}>
                       {d.iftar}
