@@ -96,7 +96,7 @@ const RamadanSchedule = () => {
         <span className="font-urdu text-sm text-muted-foreground">رمضان المبارک</span>
       </div>
 
-      {todayRamadan && (
+      {displayEntry && (
         <div className="glass-card glow-accent p-4 sm:p-6 mb-4">
           <div className="text-center mb-4">
             <p className="font-urdu text-sm text-accent mb-2" dir="rtl">{countdownLabel}</p>
@@ -107,18 +107,15 @@ const RamadanSchedule = () => {
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="text-center p-3 sm:p-4 rounded-xl bg-secondary border border-border">
               <p className="font-urdu text-xs text-muted-foreground mb-1" dir="rtl">سحری</p>
-              <p className="text-xl sm:text-2xl font-bold text-foreground font-heading">{todayRamadan.sehri}</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground font-heading">{displayEntry.sehri}</p>
             </div>
             <div className="text-center p-3 sm:p-4 rounded-xl bg-secondary border border-border">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <DatesIcon className="w-4 h-4 text-accent" />
-                <p className="font-urdu text-xs text-muted-foreground" dir="rtl">افطار</p>
-              </div>
-              <p className="text-xl sm:text-2xl font-bold text-accent font-heading">{todayRamadan.iftar}</p>
+              <p className="font-urdu text-xs text-muted-foreground mb-1" dir="rtl">افطار</p>
+              <p className="text-xl sm:text-2xl font-bold text-accent font-heading">{displayEntry.iftar}</p>
             </div>
           </div>
           <p className="text-center text-muted-foreground text-xs mt-3 font-urdu" dir="rtl">
-            دن {todayRamadan.day} — {todayRamadan.dayNameUrdu}
+            دن {displayEntry.day} — {displayEntry.dayNameUrdu}
           </p>
         </div>
       )}
