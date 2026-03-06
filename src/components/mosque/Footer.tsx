@@ -1,7 +1,7 @@
 import { MapPin, ExternalLink, Heart } from "lucide-react";
 
 const Footer = () => {
-  const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
+  const mapUrl = "https://maps.google.com/?q=34.0669,74.8006";
 
   return (
     <footer className="border-t border-border mt-8 bg-card">

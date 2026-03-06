@@ -35,6 +35,7 @@ const RamadanSchedule = () => {
   const ramadanActive = isRamadan();
   const [countdown, setCountdown] = useState("");
   const [countdownLabel, setCountdownLabel] = useState("");
+  const [displayEntry, setDisplayEntry] = useState(todayRamadan);
 
   useEffect(() => {
     if (!todayRamadan) return;
@@ -47,23 +48,23 @@ const RamadanSchedule = () => {
       if (now < sehriTime) {
         setCountdownLabel("سحری ختم ہونے میں");
         setCountdown(formatCountdown(sehriTime.getTime() - now.getTime()));
+        setDisplayEntry(todayRamadan);
       } else if (now.getTime() < sehriTime.getTime() + THREE_MIN) {
-        // Within 3 minutes after sehri ends, show transition
         setCountdownLabel("سحری کا وقت ختم ہوا — افطار تک انتظار");
         const remaining = iftarTime.getTime() - now.getTime();
         setCountdown(formatCountdown(remaining > 0 ? remaining : 0));
+        setDisplayEntry(todayRamadan);
       } else if (now < iftarTime) {
         setCountdownLabel("افطار میں");
         setCountdown(formatCountdown(iftarTime.getTime() - now.getTime()));
+        setDisplayEntry(todayRamadan);
       } else if (now.getTime() < iftarTime.getTime() + THREE_MIN) {
-        // Within 3 minutes after iftar, show completion message
         setCountdownLabel("افطار مبارک!");
         setCountdown("الحمد لله");
+        setDisplayEntry(todayRamadan);
       } else {
-        // After 3 minutes of iftar, show next day sehri countdown
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        // Find tomorrow's schedule
         const tomorrowDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
         const tomorrowEntry = ramadanSchedule.find(d => d.date === tomorrowDate);
         if (tomorrowEntry) {
@@ -74,9 +75,11 @@ const RamadanSchedule = () => {
           const nextSehri = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), tH, tM, 0);
           setCountdownLabel("اگلی سحری میں");
           setCountdown(formatCountdown(nextSehri.getTime() - now.getTime()));
+          setDisplayEntry(tomorrowEntry);
         } else {
           setCountdownLabel("رمضان مبارک");
           setCountdown("الحمد لله");
+          setDisplayEntry(todayRamadan);
         }
       }
     }, 1000);
@@ -93,7 +96,7 @@ const RamadanSchedule = () => {
         <span className="font-urdu text-sm text-muted-foreground">رمضان المبارک</span>
       </div>
 
-      {todayRamadan && (
+      {displayEntry && (
         <div className="glass-card glow-accent p-4 sm:p-6 mb-4">
           <div className="text-center mb-4">
             <p className="font-urdu text-sm text-accent mb-2" dir="rtl">{countdownLabel}</p>
@@ -104,18 +107,15 @@ const RamadanSchedule = () => {
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="text-center p-3 sm:p-4 rounded-xl bg-secondary border border-border">
               <p className="font-urdu text-xs text-muted-foreground mb-1" dir="rtl">سحری</p>
-              <p className="text-xl sm:text-2xl font-bold text-foreground font-heading">{todayRamadan.sehri}</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground font-heading">{displayEntry.sehri}</p>
             </div>
             <div className="text-center p-3 sm:p-4 rounded-xl bg-secondary border border-border">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <DatesIcon className="w-4 h-4 text-accent" />
-                <p className="font-urdu text-xs text-muted-foreground" dir="rtl">افطار</p>
-              </div>
-              <p className="text-xl sm:text-2xl font-bold text-accent font-heading">{todayRamadan.iftar}</p>
+              <p className="font-urdu text-xs text-muted-foreground mb-1" dir="rtl">افطار</p>
+              <p className="text-xl sm:text-2xl font-bold text-accent font-heading">{displayEntry.iftar}</p>
             </div>
           </div>
           <p className="text-center text-muted-foreground text-xs mt-3 font-urdu" dir="rtl">
-            دن {todayRamadan.day} — {todayRamadan.dayNameUrdu}
+            دن {displayEntry.day} — {displayEntry.dayNameUrdu}
           </p>
         </div>
       )}
