@@ -70,7 +70,12 @@ const RamadanSchedule = () => {
             </div>
             <div className="text-center p-3 sm:p-4 rounded-xl bg-secondary border border-border">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Utensils className="w-3 h-3 text-accent" />
+                <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2c0 0-2 2-2 6s2 6 2 6" />
+                  <path d="M12 2c0 0 2 2 2 6s-2 6-2 6" />
+                  <path d="M12 14v8" />
+                  <path d="M8 22h8" />
+                </svg>
                 <p className="font-urdu text-xs text-muted-foreground" dir="rtl">افطار</p>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-accent font-heading">{todayRamadan.iftar}</p>

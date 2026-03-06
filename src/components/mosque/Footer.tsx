@@ -32,7 +32,7 @@ const Footer = () => {
         <div className="w-24 h-px bg-border mx-auto mb-4" />
 
         <p className="text-center text-xs text-muted-foreground/60 mt-1">
-          © {new Date().getFullYear()} Jamia Masjid Shareef Old Barzulla Srinagar
+          © {new Date().getFullYear()} Jamia Masjid Shareef Old Barzallah Srinagar
         </p>
         <p className="text-center text-xs text-muted-foreground/50 mt-3 flex items-center justify-center gap-1">
           Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> by{" "}

@@ -52,7 +52,7 @@ const Header = () => {
           className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-4"
         >
           <MapPin className="w-3.5 h-3.5" />
-          <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
+          <span>3Q2X+VW6, Old Barzallah, Srinagar, Jammu and Kashmir 190005</span>
         </a>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-1">
