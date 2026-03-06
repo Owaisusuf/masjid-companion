@@ -1,71 +1,106 @@
-import { useState, useCallback } from "react";
-import { BookOpen, ArrowLeft, Loader2, Search, ChevronRight, Share2, Copy, BookMarked } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { BookOpen, ArrowLeft, Loader2, Search, Copy, Share2, BookMarked, ChevronRight, Heart, Bookmark, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface HadithBook {
-  key: string;
+/* ─── Types matching sunnah.com data model ─── */
+interface Collection {
   name: string;
-  nameArabic: string;
-  description: string;
-  hadiths: number;
-  books: number;
+  hasBooks: boolean;
+  hasChapters: boolean;
+  collection: { name: string; arabicTitle: string; shortIntro: string; totalHadith: number; totalAvailableHadith: number }[];
 }
 
-interface BookSection {
-  number: number;
-  name: string;
-  nameArabic: string;
-  hadithFrom: number;
-  hadithTo: number;
+interface BookInfo {
+  bookNumber: string;
+  book: { name: string; arabicName?: string };
+  hadithStartNumber: number;
+  hadithEndNumber: number;
+  numberOfHadith: number;
+}
+
+interface ChapterInfo {
+  chapterNumber: string;
+  chapterEnglish: string;
+  chapterArabic: string;
+  chapterUrdu?: string;
 }
 
 interface HadithItem {
-  id: number;
-  text: string;
-  textArabic?: string;
-  narrator?: string;
-  reference?: string;
-  inBookRef?: string;
+  hadithNumber: number;
+  englishNarrator: string;
+  hadithEnglish: string;
+  hadithArabic: string;
+  hadithUrdu?: string;
+  bookNumber: string;
+  chapterId?: string;
+  reference: string;
+  inBookReference: string;
+  grades?: { name: string; grade: string }[];
 }
 
-// PRIMARY COLLECTIONS - matching sunnah.com exactly
-const primaryCollections: HadithBook[] = [
-  { key: "bukhari", name: "Sahih al-Bukhari", nameArabic: "صحيح البخاري", description: "Sahih al-Bukhari is a collection of hadith compiled by Imam Muhammad al-Bukhari (d. 256 AH/870 CE). His collection is recognized by the overwhelming majority of the Muslim world to be the most authentic collection of reports of the Sunnah of the Prophet Muhammad (ﷺ). It contains over 7500 hadith (with repetitions) in 97 books.", hadiths: 7563, books: 97 },
-  { key: "muslim", name: "Sahih Muslim", nameArabic: "صحيح مسلم", description: "Sahih Muslim is a collection of hadith compiled by Imam Muslim ibn al-Hajjaj al-Naysaburi (d. 261 AH/875 CE). His collection is considered to be one of the most authentic collections of the Sunnah of the Prophet (ﷺ).", hadiths: 3032, books: 56 },
-  { key: "nasai", name: "Sunan an-Nasa'i", nameArabic: "سنن النسائي", description: "Sunan an-Nasa'i is a collection of hadith compiled by Imam Ahmad an-Nasa'i (d. 303 AH/915 CE). It is one of the six canonical hadith collections.", hadiths: 5758, books: 51 },
-  { key: "abudawud", name: "Sunan Abu Dawud", nameArabic: "سنن أبي داود", description: "Sunan Abu Dawud is a collection of hadith compiled by Imam Abu Dawud Sulayman ibn al-Ash'ath as-Sijistani (d. 275 AH/889 CE).", hadiths: 5274, books: 43 },
-  { key: "tirmidhi", name: "Jami` at-Tirmidhi", nameArabic: "جامع الترمذي", description: "Jami` at-Tirmidhi is a collection of hadith compiled by Imam Abu `Isa Muhammad at-Tirmidhi (d. 279 AH/892 CE). It contains roughly 3956 hadith.", hadiths: 3956, books: 49 },
-  { key: "ibnmajah", name: "Sunan Ibn Majah", nameArabic: "سنن ابن ماجه", description: "Sunan Ibn Majah is a collection of hadith compiled by Imam Muhammad bin Yazid Ibn Majah al-Qazvini (d. 273 AH/887 CE).", hadiths: 4341, books: 37 },
+/* ─── Collection definitions matching sunnah.com exactly ─── */
+const PRIMARY_COLLECTIONS = [
+  { key: "bukhari", name: "Sahih al-Bukhari", arabic: "صحيح البخاري", hadiths: 7563, intro: "Sahih al-Bukhari is a collection of hadith compiled by Imam Muhammad al-Bukhari (d. 256 AH/870 AD). His collection is recognized by the overwhelming majority of the Muslim world to be the most authentic collection of reports of the Sunnah of the Prophet Muhammad (ﷺ). It contains over 7500 hadith (with repetitions) in 97 books." },
+  { key: "muslim", name: "Sahih Muslim", arabic: "صحيح مسلم", hadiths: 3032, intro: "Sahih Muslim is a collection of hadith compiled by Imam Muslim ibn al-Hajjaj al-Naysaburi (d. 261 AH/875 AD). His collection is considered to be one of the most authentic collections of the Sunnah of the Prophet (ﷺ), and it contains roughly 7500 hadith (with repetitions) in 57 books." },
+  { key: "nasai", name: "Sunan an-Nasa'i", arabic: "سنن النسائي", hadiths: 5758, intro: "Sunan an-Nasa'i is a collection of hadith compiled by Imam Ahmad an-Nasa'i (d. 303 AH/915 AD). His collection is unanimously considered to be one of the six canonical collections of hadith (Kutub as-Sittah) of the Sunnah of the Prophet (ﷺ)." },
+  { key: "abudawud", name: "Sunan Abi Dawud", arabic: "سنن أبي داود", hadiths: 5274, intro: "Sunan Abi Dawud is a collection of hadith compiled by Imam Abu Dawud Sulayman ibn al-Ash'ath as-Sijistani (d. 275 AH/889 AD). It is widely considered to be among the six canonical collections of hadith (Kutub as-Sittah)." },
+  { key: "tirmidhi", name: "Jami` at-Tirmidhi", arabic: "جامع الترمذي", hadiths: 3956, intro: "Jami` at-Tirmidhi is a collection of hadith compiled by Imam Abu `Isa Muhammad at-Tirmidhi (d. 279 AH/892 AD). His collection is unanimously considered to be one of the six canonical collections of hadith (Kutub as-Sittah)." },
+  { key: "ibnmajah", name: "Sunan Ibn Majah", arabic: "سنن ابن ماجه", hadiths: 4341, intro: "Sunan Ibn Majah is a collection of hadith compiled by Imam Muhammad bin Yazid Ibn Majah al-Qazvini (d. 273 AH/887 AD). It is widely considered to be the sixth of the six canonical collections of hadith (Kutub as-Sittah)." },
 ];
 
-// SELECTIONS - secondary collections
-const secondaryCollections: HadithBook[] = [
-  { key: "nawawi40", name: "An-Nawawi's 40 Hadith", nameArabic: "الأربعون النووية", description: "A collection of 40 hadith compiled by Imam Nawawi.", hadiths: 42, books: 1 },
-  { key: "riyadussalihin", name: "Riyad as-Salihin", nameArabic: "رياض الصالحين", description: "A collection of hadith compiled by Imam Nawawi. It is widely regarded as one of the most important compilations.", hadiths: 1896, books: 20 },
+const SECONDARY_COLLECTIONS = [
+  { key: "nawawi40", name: "40 Hadith Nawawi", arabic: "الأربعون النووية", hadiths: 42, intro: "An-Nawawi's Forty Hadith are forty-two (actually forty-two, but commonly referred to as 'forty') hadith collected by Imam Yahya ibn Sharaf an-Nawawi." },
+  { key: "riyadussalihin", name: "Riyad as-Salihin", arabic: "رياض الصالحين", hadiths: 1896, intro: "Riyad as-Salihin by Imam an-Nawawi is a book of hadith covering various topics from the Sunnah." },
+  { key: "adab", name: "Al-Adab Al-Mufrad", arabic: "الأدب المفرد", hadiths: 1322, intro: "Al-Adab Al-Mufrad is a hadith collection focused on etiquettes and morals, compiled by Imam al-Bukhari." },
+  { key: "bulugh", name: "Bulugh al-Maram", arabic: "بلوغ المرام", hadiths: 1358, intro: "Bulugh al-Maram is a collection of hadith pertaining to jurisprudence compiled by Imam Ibn Hajar al-Asqalani." },
+  { key: "qudsi40", name: "40 Hadith Qudsi", arabic: "الأحاديث القدسية", hadiths: 40, intro: "Hadith Qudsi are from amongst the ahadith that narrate words of Allah that were not revealed as part of the Qur'an." },
 ];
 
-type View = "home" | "sections" | "hadiths";
+const API_BASE = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1";
+
+type View = "home" | "books" | "hadiths";
 
 const HadithCollection = () => {
   const [view, setView] = useState<View>("home");
-  const [selectedBook, setSelectedBook] = useState<HadithBook | null>(null);
-  const [sections, setSections] = useState<BookSection[]>([]);
-  const [selectedSection, setSelectedSection] = useState<BookSection | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<typeof PRIMARY_COLLECTIONS[0] | null>(null);
+  const [books, setBooks] = useState<{ number: number | string; name: string; nameArabic: string; hadithFrom: number; hadithTo: number; count: number }[]>([]);
+  const [selectedBook, setSelectedBook] = useState<typeof books[0] | null>(null);
   const [hadiths, setHadiths] = useState<HadithItem[]>([]);
-  const [allData, setAllData] = useState<any[]>([]);
-  const [arabicData, setArabicData] = useState<any[]>([]);
+  const [allEngData, setAllEngData] = useState<any[]>([]);
+  const [allArbData, setAllArbData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 25;
 
-  const loadBook = useCallback(async (book: HadithBook) => {
+  // Load bookmarks from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("hadith-bookmarks");
+      if (saved) setBookmarks(new Set(JSON.parse(saved)));
+    } catch { /* ignore */ }
+  }, []);
+
+  const toggleBookmark = (id: number) => {
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("hadith-bookmarks", JSON.stringify([...next]));
+      toast({ title: next.has(id) ? "Bookmarked" : "Removed", description: `Hadith #${id}` });
+      return next;
+    });
+  };
+
+  const loadCollection = useCallback(async (col: typeof PRIMARY_COLLECTIONS[0]) => {
     setLoading(true);
     setError("");
     try {
       const [engRes, arbRes] = await Promise.all([
-        fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-${book.key}.min.json`),
-        fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/ara-${book.key}.min.json`),
+        fetch(`${API_BASE}/editions/eng-${col.key}.min.json`),
+        fetch(`${API_BASE}/editions/ara-${col.key}.min.json`),
       ]);
 
       let engItems: any[] = [];
@@ -80,97 +115,73 @@ const HadithCollection = () => {
         arbItems = json?.hadiths || [];
       }
 
-      setAllData(engItems);
-      setArabicData(arbItems);
+      setAllEngData(engItems);
+      setAllArbData(arbItems);
 
-      // Build real book sections from reference.book field
-      const bookMap = new Map<string, { items: number[]; minH: number; maxH: number }>();
+      // Build book sections from reference.book
+      const bookMap = new Map<string, { items: number[]; min: number; max: number }>();
       engItems.forEach((h: any) => {
-        const bookNum = String(h.reference?.book || h.bookNumber || "1");
-        if (!bookMap.has(bookNum)) {
-          bookMap.set(bookNum, { items: [], minH: h.hadithnumber || 1, maxH: h.hadithnumber || 1 });
-        }
-        const entry = bookMap.get(bookNum)!;
-        entry.items.push(h.hadithnumber || 1);
-        const num = h.hadithnumber || 1;
-        if (num < entry.minH) entry.minH = num;
-        if (num > entry.maxH) entry.maxH = num;
+        const bNum = String(h.reference?.book || h.bookNumber || "1");
+        if (!bookMap.has(bNum)) bookMap.set(bNum, { items: [], min: Infinity, max: -Infinity });
+        const entry = bookMap.get(bNum)!;
+        const hNum = h.hadithnumber || 1;
+        entry.items.push(hNum);
+        entry.min = Math.min(entry.min, hNum);
+        entry.max = Math.max(entry.max, hNum);
       });
 
-      // Create sections based on actual book divisions
-      const chapSections: BookSection[] = [];
       const sortedKeys = Array.from(bookMap.keys()).sort((a, b) => Number(a) - Number(b));
-      
-      if (sortedKeys.length > 1 && sortedKeys.length <= 120) {
-        // Use actual book divisions
-        sortedKeys.forEach((key) => {
-          const entry = bookMap.get(key)!;
-          chapSections.push({
-            number: Number(key),
-            name: `Book ${key}`,
-            nameArabic: `كتاب ${key}`,
-            hadithFrom: entry.minH,
-            hadithTo: entry.maxH,
-          });
-        });
-      } else {
-        // Fallback: chunks of 50
-        const totalHadiths = engItems.length;
-        const chapterSize = 50;
-        for (let i = 0; i < totalHadiths; i += chapterSize) {
-          const from = i + 1;
-          const to = Math.min(i + chapterSize, totalHadiths);
-          chapSections.push({
-            number: chapSections.length + 1,
-            name: `Hadiths ${from} – ${to}`,
-            nameArabic: `أحاديث ${from} – ${to}`,
-            hadithFrom: from,
-            hadithTo: to,
-          });
-        }
-      }
+      const bookSections = sortedKeys.length > 1 && sortedKeys.length <= 120
+        ? sortedKeys.map(key => {
+            const e = bookMap.get(key)!;
+            return { number: Number(key), name: `Book ${key}`, nameArabic: `كتاب ${key}`, hadithFrom: e.min, hadithTo: e.max, count: e.items.length };
+          })
+        : (() => {
+            const result: typeof books = [];
+            for (let i = 0; i < engItems.length; i += 50) {
+              result.push({ number: result.length + 1, name: `Hadiths ${i + 1} – ${Math.min(i + 50, engItems.length)}`, nameArabic: "", hadithFrom: i + 1, hadithTo: Math.min(i + 50, engItems.length), count: Math.min(50, engItems.length - i) });
+            }
+            return result;
+          })();
 
-      setSections(chapSections);
-      setView("sections");
+      setBooks(bookSections);
+      setView("books");
     } catch {
-      setError("Failed to load. Please check your connection and try again.");
+      setError("Failed to load collection. Check your connection.");
     }
     setLoading(false);
   }, []);
 
-  const selectBook = (book: HadithBook) => {
-    setSelectedBook(book);
+  const selectCollection = (col: typeof PRIMARY_COLLECTIONS[0]) => {
+    setSelectedCollection(col);
     setSearchQuery("");
     setError("");
-    setShowMoreInfo(false);
-    loadBook(book);
+    setShowInfo(false);
+    setPage(0);
+    loadCollection(col);
   };
 
-  const selectSection = (section: BookSection) => {
-    setSelectedSection(section);
+  const selectBook = (book: typeof books[0]) => {
+    setSelectedBook(book);
+    setPage(0);
     const items: HadithItem[] = [];
-    
-    // Find hadiths that belong to this section
-    for (let i = 0; i < allData.length; i++) {
-      const eng = allData[i];
+    for (let i = 0; i < allEngData.length; i++) {
+      const eng = allEngData[i];
       const hNum = eng?.hadithnumber || (i + 1);
-      if (hNum >= section.hadithFrom && hNum <= section.hadithTo) {
-        const arb = arabicData[i];
-        // Extract narrator from English text
+      if (hNum >= book.hadithFrom && hNum <= book.hadithTo) {
+        const arb = allArbData[i];
         let narrator = "";
         let text = eng?.text || "";
-        const narratorMatch = text.match(/^(Narrated\s+[^:]+):\s*/i);
-        if (narratorMatch) {
-          narrator = narratorMatch[1];
-          text = text.substring(narratorMatch[0].length);
-        }
+        const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
+        if (match) { narrator = match[1]; text = text.slice(match[0].length); }
         items.push({
-          id: hNum,
-          text,
-          textArabic: arb?.text || "",
-          narrator,
-          reference: `${selectedBook?.name} ${hNum}`,
-          inBookRef: `Book ${section.number}, Hadith ${hNum - section.hadithFrom + 1}`,
+          hadithNumber: hNum,
+          englishNarrator: narrator,
+          hadithEnglish: text,
+          hadithArabic: arb?.text || "",
+          bookNumber: String(book.number),
+          reference: `${selectedCollection?.name} ${hNum}`,
+          inBookReference: `Book ${book.number}, Hadith ${hNum - book.hadithFrom + 1}`,
         });
       }
     }
@@ -181,176 +192,151 @@ const HadithCollection = () => {
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     const num = parseInt(searchQuery);
-    if (!isNaN(num) && num >= 1 && num <= allData.length) {
-      const eng = allData[num - 1];
-      const arb = arabicData[num - 1];
+    if (!isNaN(num)) {
+      const eng = allEngData.find((h: any) => (h.hadithnumber || 0) === num);
       if (eng) {
+        const idx = allEngData.indexOf(eng);
+        const arb = allArbData[idx];
         let narrator = "";
-        let text = eng?.text || "";
-        const narratorMatch = text.match(/^(Narrated\s+[^:]+):\s*/i);
-        if (narratorMatch) {
-          narrator = narratorMatch[1];
-          text = text.substring(narratorMatch[0].length);
-        }
-        setHadiths([{
-          id: eng.hadithnumber || num,
-          text,
-          textArabic: arb?.text || "",
-          narrator,
-          reference: `${selectedBook?.name} ${eng.hadithnumber || num}`,
-          inBookRef: "",
-        }]);
-        setSelectedSection({ number: 0, name: `Search: Hadith #${num}`, nameArabic: "", hadithFrom: num, hadithTo: num });
+        let text = eng.text || "";
+        const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
+        if (match) { narrator = match[1]; text = text.slice(match[0].length); }
+        setHadiths([{ hadithNumber: num, englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${num}`, inBookReference: "" }]);
+        setSelectedBook({ number: 0, name: `Hadith #${num}`, nameArabic: "", hadithFrom: num, hadithTo: num, count: 1 });
         setView("hadiths");
-        setError("");
+        setPage(0);
         return;
       }
     }
-    // Text search through hadiths
-    const query = searchQuery.toLowerCase();
+    // Text search
+    const q = searchQuery.toLowerCase();
     const results: HadithItem[] = [];
-    for (let i = 0; i < allData.length && results.length < 30; i++) {
-      const eng = allData[i];
-      if (eng?.text?.toLowerCase().includes(query)) {
-        const arb = arabicData[i];
+    for (let i = 0; i < allEngData.length && results.length < 50; i++) {
+      const eng = allEngData[i];
+      if (eng?.text?.toLowerCase().includes(q)) {
+        const arb = allArbData[i];
         let narrator = "";
         let text = eng.text || "";
-        const narratorMatch = text.match(/^(Narrated\s+[^:]+):\s*/i);
-        if (narratorMatch) {
-          narrator = narratorMatch[1];
-          text = text.substring(narratorMatch[0].length);
-        }
-        results.push({
-          id: eng.hadithnumber || (i + 1),
-          text,
-          textArabic: arb?.text || "",
-          narrator,
-          reference: `${selectedBook?.name} ${eng.hadithnumber || (i + 1)}`,
-          inBookRef: "",
-        });
+        const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
+        if (match) { narrator = match[1]; text = text.slice(match[0].length); }
+        results.push({ hadithNumber: eng.hadithnumber || (i + 1), englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${eng.hadithnumber || (i + 1)}`, inBookReference: "" });
       }
     }
-    if (results.length === 0) {
-      setError(`No results found for "${searchQuery}"`);
-      return;
-    }
+    if (!results.length) { setError(`No results for "${searchQuery}"`); return; }
     setHadiths(results);
-    setSelectedSection({ number: 0, name: `Search: "${searchQuery}" (${results.length} results)`, nameArabic: "", hadithFrom: 0, hadithTo: 0 });
+    setSelectedBook({ number: 0, name: `Search: "${searchQuery}" (${results.length})`, nameArabic: "", hadithFrom: 0, hadithTo: 0, count: results.length });
     setView("hadiths");
+    setPage(0);
     setError("");
   };
 
   const copyHadith = (h: HadithItem) => {
-    const text = `${h.narrator ? h.narrator + ": " : ""}${h.text}\n\n— ${h.reference}`;
+    const text = `${h.englishNarrator ? h.englishNarrator + ": " : ""}${h.hadithEnglish}\n\n— ${h.reference}`;
     navigator.clipboard.writeText(text);
-    toast({ title: "Copied", description: "Hadith copied to clipboard" });
+    toast({ title: "Copied!", description: "Hadith copied to clipboard" });
+  };
+
+  const shareHadith = (h: HadithItem) => {
+    const text = `${h.englishNarrator ? h.englishNarrator + ": " : ""}${h.hadithEnglish}\n\n— ${h.reference}`;
+    if (navigator.share) {
+      navigator.share({ title: h.reference, text });
+    } else {
+      copyHadith(h);
+    }
   };
 
   const goBack = () => {
-    if (view === "hadiths") {
-      setView("sections");
-      setHadiths([]);
-      setSelectedSection(null);
-    } else if (view === "sections") {
-      setView("home");
-      setSelectedBook(null);
-      setSections([]);
-      setAllData([]);
-      setArabicData([]);
-    }
+    if (view === "hadiths") { setView("books"); setHadiths([]); setSelectedBook(null); setPage(0); }
+    else if (view === "books") { setView("home"); setSelectedCollection(null); setBooks([]); setAllEngData([]); setAllArbData([]); }
     setError("");
   };
 
-  const resetToHome = () => {
-    setView("home");
-    setSelectedBook(null);
-    setSelectedSection(null);
-    setSections([]);
-    setAllData([]);
-    setArabicData([]);
-    setHadiths([]);
-    setError("");
-    setSearchQuery("");
+  const resetHome = () => {
+    setView("home"); setSelectedCollection(null); setSelectedBook(null);
+    setBooks([]); setHadiths([]); setAllEngData([]); setAllArbData([]);
+    setError(""); setSearchQuery(""); setPage(0);
   };
+
+  // Pagination
+  const pagedHadiths = hadiths.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(hadiths.length / PAGE_SIZE);
 
   return (
     <section id="hadith-collection" className="px-4 max-w-5xl mx-auto">
-      {/* Section Header */}
       <div className="section-heading">
         <BookOpen className="w-5 h-5 text-accent shrink-0" />
         <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Hadith Collection</h2>
         <span className="font-urdu text-sm text-muted-foreground">مجموعۂ احادیث</span>
       </div>
 
-      {/* === HOME VIEW - Sunnah.com style === */}
+      {/* ═══ HOME ═══ */}
       {view === "home" && (
         <div className="glass-card overflow-hidden">
-          {/* Sunnah.com style header bar */}
-          <div className="bg-[hsl(var(--primary))] px-5 py-4 text-center">
-            <p className="text-primary-foreground/90 text-xs sm:text-sm font-body tracking-wide">
+          {/* Green top bar - sunnah.com */}
+          <div className="bg-[hsl(var(--primary))] px-4 py-3 sm:px-6 sm:py-4 text-center">
+            <p className="text-primary-foreground text-xs sm:text-sm font-body">
               The Hadith of the Prophet Muhammad (صلى الله عليه و سلم) at your fingertips
             </p>
           </div>
 
-          {/* Primary Collections */}
-          <div className="p-5 sm:p-6">
-            <div className="flex items-center justify-center gap-3 mb-5">
-              <div className="h-px flex-1 bg-primary/20" />
-              <h3 className="text-xs sm:text-sm font-heading font-bold text-primary tracking-wider uppercase">
-                Primary Collections
-              </h3>
-              <span className="font-arabic text-sm text-accent">المصادر الأصلية</span>
-              <div className="h-px flex-1 bg-primary/20" />
+          <div className="p-4 sm:p-6">
+            {/* Search across all */}
+            <div className="mb-6">
+              <p className="text-center text-xs text-muted-foreground font-body mb-3">
+                Search by keyword or hadith number after selecting a collection
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
-              {primaryCollections.map((book) => (
+            {/* Primary Collections */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px flex-1 bg-border" />
+              <h3 className="text-xs font-heading font-bold text-primary tracking-wider uppercase whitespace-nowrap">Primary Collections</h3>
+              <span className="font-arabic text-sm text-accent whitespace-nowrap">الكتب الستة</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+              {PRIMARY_COLLECTIONS.map((col) => (
                 <button
-                  key={book.key}
-                  onClick={() => selectBook(book)}
-                  className="flex items-center justify-between py-3 border-b border-border/40 hover:bg-secondary/30 transition-colors px-2 rounded group"
+                  key={col.key}
+                  onClick={() => selectCollection(col)}
+                  className="flex items-center justify-between py-3 border-b border-border/40 hover:bg-secondary/30 transition-colors px-2 rounded group text-left"
                 >
-                  <span className="font-body text-sm text-primary font-medium group-hover:text-accent transition-colors text-left">
-                    {book.name}
-                  </span>
-                  <span className="font-arabic text-base text-foreground/70" dir="rtl">
-                    {book.nameArabic}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Secondary Collections */}
-          <div className="px-5 sm:px-6 pb-5 sm:pb-6">
-            <div className="flex items-center justify-center gap-3 mb-5">
-              <div className="h-px flex-1 bg-primary/20" />
-              <h3 className="text-xs sm:text-sm font-heading font-bold text-primary tracking-wider uppercase">
-                Selections
-              </h3>
-              <span className="font-arabic text-sm text-accent">المصادر الثانوية</span>
-              <div className="h-px flex-1 bg-primary/20" />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
-              {secondaryCollections.map((book) => (
-                <button
-                  key={book.key}
-                  onClick={() => selectBook(book)}
-                  className="flex items-center justify-between py-3 border-b border-border/40 hover:bg-secondary/30 transition-colors px-2 rounded group"
-                >
-                  <span className="font-body text-sm text-primary font-medium group-hover:text-accent transition-colors text-left">
-                    {book.name}
-                  </span>
-                  <span className="font-arabic text-base text-foreground/70" dir="rtl">
-                    {book.nameArabic}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm text-primary font-medium group-hover:text-accent transition-colors truncate">{col.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-body">{col.hadiths.toLocaleString()} hadith</p>
+                  </div>
+                  <span className="font-arabic text-base text-foreground/60 shrink-0 ml-3" dir="rtl">{col.arabic}</span>
                 </button>
               ))}
             </div>
 
-            <p className="text-center text-muted-foreground/60 text-xs font-body mt-5">
-              Supported languages: English, Arabic
+            {/* Secondary Collections */}
+            <div className="flex items-center gap-3 mb-4 mt-8">
+              <div className="h-px flex-1 bg-border" />
+              <h3 className="text-xs font-heading font-bold text-primary tracking-wider uppercase whitespace-nowrap">Other Collections</h3>
+              <span className="font-arabic text-sm text-accent whitespace-nowrap">مجموعات أخرى</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+              {SECONDARY_COLLECTIONS.map((col) => (
+                <button
+                  key={col.key}
+                  onClick={() => selectCollection(col)}
+                  className="flex items-center justify-between py-3 border-b border-border/40 hover:bg-secondary/30 transition-colors px-2 rounded group text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm text-primary font-medium group-hover:text-accent transition-colors truncate">{col.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-body">{col.hadiths.toLocaleString()} hadith</p>
+                  </div>
+                  <span className="font-arabic text-base text-foreground/60 shrink-0 ml-3" dir="rtl">{col.arabic}</span>
+                </button>
+              ))}
+            </div>
+
+            <p className="text-center text-muted-foreground/50 text-[10px] font-body mt-6">
+              Languages: English • Arabic &nbsp;|&nbsp; Source: hadith-api
             </p>
           </div>
         </div>
@@ -364,75 +350,70 @@ const HadithCollection = () => {
         </div>
       )}
 
-      {/* === SECTIONS/BOOKS VIEW - Sunnah.com style === */}
-      {view === "sections" && !loading && selectedBook && (
+      {/* ═══ BOOKS VIEW ═══ */}
+      {view === "books" && !loading && selectedCollection && (
         <div className="glass-card overflow-hidden">
           {/* Breadcrumb */}
-          <div className="bg-[hsl(var(--primary))] px-4 py-2.5 flex items-center gap-1.5 text-xs text-primary-foreground/80 font-body">
-            <button onClick={resetToHome} className="hover:text-primary-foreground transition-colors">Home</button>
-            <span>»</span>
-            <span className="text-primary-foreground font-medium">{selectedBook.name}</span>
+          <div className="bg-[hsl(var(--primary))] px-4 py-2 flex items-center gap-1.5 text-xs text-primary-foreground/80 font-body">
+            <button onClick={resetHome} className="hover:text-primary-foreground transition-colors">Home</button>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-primary-foreground font-medium truncate">{selectedCollection.name}</span>
           </div>
 
-          {/* Book header - matching sunnah.com beige background */}
-          <div className="p-5 sm:p-6 bg-secondary/30 border-b border-border">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
-              <h3 className="font-heading text-xl sm:text-2xl font-bold text-foreground">{selectedBook.name}</h3>
-              <p className="font-arabic text-2xl text-foreground/70" dir="rtl">{selectedBook.nameArabic}</p>
+          {/* Collection info */}
+          <div className="p-4 sm:p-5 bg-secondary/30 border-b border-border">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 mb-2">
+              <h3 className="font-heading text-lg sm:text-xl font-bold text-foreground">{selectedCollection.name}</h3>
+              <p className="font-arabic text-xl text-foreground/60" dir="rtl">{selectedCollection.arabic}</p>
             </div>
-            <p className={`text-xs text-muted-foreground font-body leading-relaxed ${showMoreInfo ? "" : "line-clamp-2"}`}>
-              {selectedBook.description}
+            <p className={`text-xs text-muted-foreground font-body leading-relaxed ${showInfo ? "" : "line-clamp-2"}`}>
+              {selectedCollection.intro}
             </p>
-            <button
-              onClick={() => setShowMoreInfo(!showMoreInfo)}
-              className="text-primary text-xs font-body mt-1 hover:underline"
-            >
-              {showMoreInfo ? "Less" : "More information ..."}
+            <button onClick={() => setShowInfo(!showInfo)} className="text-primary text-xs font-body mt-1 hover:underline">
+              {showInfo ? "Show less" : "More information..."}
             </button>
 
-            {/* Search bar */}
-            <div className="flex items-center gap-2 mt-4">
+            {/* Search */}
+            <div className="flex items-center gap-2 mt-3">
               <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
                 <input
                   type="text"
-                  placeholder="Search by hadith # or keyword..."
+                  placeholder="Search by number or keyword..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-xs font-body placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-card border border-border text-foreground text-xs font-body placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 />
               </div>
-              <button onClick={handleSearch} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
-                <Search className="w-4 h-4" />
+              <button onClick={handleSearch} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity text-xs font-body font-medium">
+                Search
               </button>
             </div>
           </div>
 
-          {error && (
-            <div className="text-center text-destructive text-sm py-3 bg-destructive/5 border-b border-border">{error}</div>
-          )}
+          {error && <div className="text-center text-destructive text-xs py-3 bg-destructive/5 border-b border-border">{error}</div>}
 
-          {/* Books/Sections list - sunnah.com table rows */}
+          {/* Books list */}
           <div className="divide-y divide-border/30 max-h-[500px] overflow-y-auto">
-            {sections.map((s) => (
+            {books.map((b) => (
               <button
-                key={s.number}
-                onClick={() => selectSection(s)}
-                className="w-full flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-secondary/40 transition-colors text-left group"
+                key={b.number}
+                onClick={() => selectBook(b)}
+                className="w-full flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-secondary/30 transition-colors text-left group"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 font-body">
-                    {s.number}
+                  <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 font-body">
+                    {b.number}
                   </span>
-                  <span className="font-body text-sm text-primary font-medium group-hover:text-accent transition-colors">
-                    {s.name}
-                  </span>
+                  <div className="min-w-0">
+                    <p className="font-body text-sm text-primary font-medium group-hover:text-accent transition-colors truncate">{b.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-body">{b.count} hadith</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 text-muted-foreground">
-                  <span className="font-arabic text-sm hidden sm:block" dir="rtl">{s.nameArabic}</span>
-                  <span className="text-xs font-body tabular-nums">{s.hadithFrom}</span>
-                  <span className="text-xs font-body">to</span>
-                  <span className="text-xs font-body tabular-nums">{s.hadithTo}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {b.nameArabic && <span className="font-arabic text-sm text-foreground/50 hidden sm:block" dir="rtl">{b.nameArabic}</span>}
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
                 </div>
               </button>
             ))}
@@ -440,93 +421,72 @@ const HadithCollection = () => {
         </div>
       )}
 
-      {/* === HADITHS VIEW - Sunnah.com exact layout === */}
+      {/* ═══ HADITHS VIEW - Sunnah.com exact layout ═══ */}
       {view === "hadiths" && !loading && (
         <div className="glass-card overflow-hidden">
-          {/* Breadcrumb bar */}
-          <div className="bg-[hsl(var(--primary))] px-4 py-2.5 flex items-center gap-1.5 text-xs text-primary-foreground/80 font-body flex-wrap">
-            <button onClick={resetToHome} className="hover:text-primary-foreground transition-colors">Home</button>
-            <span>»</span>
-            <button onClick={goBack} className="hover:text-primary-foreground transition-colors">{selectedBook?.name}</button>
-            <span>»</span>
-            <span className="text-primary-foreground font-medium">{selectedSection?.name}</span>
+          {/* Breadcrumb */}
+          <div className="bg-[hsl(var(--primary))] px-4 py-2 flex items-center gap-1.5 text-xs text-primary-foreground/80 font-body flex-wrap">
+            <button onClick={resetHome} className="hover:text-primary-foreground transition-colors">Home</button>
+            <ChevronRight className="w-3 h-3" />
+            <button onClick={goBack} className="hover:text-primary-foreground transition-colors truncate max-w-[120px] sm:max-w-none">{selectedCollection?.name}</button>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-primary-foreground font-medium truncate">{selectedBook?.name}</span>
           </div>
 
-          {/* Book/Chapter header */}
-          <div className="p-4 sm:p-5 bg-secondary/30 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <button onClick={goBack} className="text-primary hover:text-accent transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h3 className="font-heading text-lg font-bold text-foreground">{selectedSection?.name}</h3>
-                <p className="text-xs text-muted-foreground font-body">{selectedBook?.name}</p>
-              </div>
+          {/* Chapter header */}
+          <div className="p-4 sm:p-5 bg-secondary/30 border-b border-border flex items-center gap-3">
+            <button onClick={goBack} className="text-primary hover:text-accent transition-colors shrink-0">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-heading text-base sm:text-lg font-bold text-foreground truncate">{selectedBook?.name}</h3>
+              <p className="text-[10px] text-muted-foreground font-body">{selectedCollection?.name} • {hadiths.length} hadith</p>
             </div>
-            {selectedSection?.nameArabic && (
-              <p className="font-arabic text-xl text-foreground/70" dir="rtl">{selectedSection.nameArabic}</p>
-            )}
           </div>
 
-          {/* Hadiths list - sunnah.com style */}
-          <div className="divide-y divide-border/40 max-h-[700px] overflow-y-auto">
-            {hadiths.map((h) => (
-              <div key={h.id} className="relative">
-                {/* Chapter divider with number */}
-                <div className="flex items-center gap-3 px-4 sm:px-6 pt-5 pb-2">
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-bold font-body shrink-0">
-                    <BookMarked className="w-3.5 h-3.5" />
+          {/* Hadith cards - sunnah.com layout */}
+          <div className="divide-y divide-border/30">
+            {pagedHadiths.map((h) => (
+              <div key={h.hadithNumber} className="relative">
+                {/* Hadith number badge */}
+                <div className="flex items-center gap-3 px-4 sm:px-5 pt-4 pb-1.5">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-[10px] font-bold font-body shrink-0">
+                    {h.hadithNumber}
                   </span>
-                  <span className="text-xs text-muted-foreground font-body">Hadith {h.id}</span>
+                  <span className="text-[10px] text-muted-foreground font-body">{h.reference}</span>
                 </div>
 
-                {/* Two-column layout: English left, Arabic right */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-                  {/* English - left side */}
-                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-r-0 md:border-r border-border/30">
-                    {h.narrator && (
-                      <p className="text-sm font-body font-semibold text-primary mb-2">{h.narrator}:</p>
-                    )}
-                    <p className="text-sm leading-relaxed text-foreground/85 font-body">
-                      {h.text}
+                {/* English text */}
+                <div className="px-4 sm:px-5 py-2 sm:py-3">
+                  {h.englishNarrator && (
+                    <p className="text-sm font-body font-semibold text-primary mb-1.5">{h.englishNarrator}:</p>
+                  )}
+                  <p className="text-sm leading-relaxed text-foreground/85 font-body">{h.hadithEnglish}</p>
+                </div>
+
+                {/* Arabic text - green tint like sunnah.com */}
+                {h.hadithArabic && (
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 bg-primary/[0.04]">
+                    <p className="font-arabic text-base sm:text-lg leading-[2.2] text-foreground/90 text-right" dir="rtl">
+                      {h.hadithArabic}
                     </p>
                   </div>
+                )}
 
-                  {/* Arabic - right side, slightly tinted background */}
-                  {h.textArabic && (
-                    <div className="px-4 sm:px-6 py-3 sm:py-4 bg-primary/[0.03]">
-                      <p className="font-arabic text-base sm:text-lg leading-[2.4] text-foreground/90 text-right" dir="rtl">
-                        {h.textArabic}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Reference footer - sunnah.com style */}
-                <div className="px-4 sm:px-6 py-3 bg-secondary/20 border-t border-border/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                  <div className="text-[11px] text-muted-foreground font-body space-y-0.5">
+                {/* Reference footer */}
+                <div className="px-4 sm:px-5 py-2.5 bg-secondary/20 border-t border-border/20 flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
                     <p><span className="font-medium text-foreground/70">Reference</span> : <span className="text-primary">{h.reference}</span></p>
-                    {h.inBookRef && <p><span className="font-medium text-foreground/70">In-book reference</span> : {h.inBookRef}</p>}
+                    {h.inBookReference && <p><span className="font-medium text-foreground/70">In-book reference</span> : {h.inBookReference}</p>}
                   </div>
-                  <div className="flex items-center gap-3 text-muted-foreground/50">
-                    <button
-                      onClick={() => copyHadith(h)}
-                      className="hover:text-primary transition-colors"
-                      title="Copy"
-                    >
+                  <div className="flex items-center gap-2.5 text-muted-foreground/40">
+                    <button onClick={() => toggleBookmark(h.hadithNumber)} className={`hover:text-accent transition-colors ${bookmarks.has(h.hadithNumber) ? "text-accent" : ""}`} title="Bookmark">
+                      <Bookmark className="w-3.5 h-3.5" fill={bookmarks.has(h.hadithNumber) ? "currentColor" : "none"} />
+                    </button>
+                    <button onClick={() => copyHadith(h)} className="hover:text-primary transition-colors" title="Copy">
                       <Copy className="w-3.5 h-3.5" />
                     </button>
-                    <button
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator.share({ title: h.reference, text: `${h.narrator ? h.narrator + ": " : ""}${h.text}\n\n— ${h.reference}` });
-                        } else {
-                          copyHadith(h);
-                        }
-                      }}
-                      className="hover:text-primary transition-colors"
-                      title="Share"
-                    >
+                    <button onClick={() => shareHadith(h)} className="hover:text-primary transition-colors" title="Share">
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -538,6 +498,29 @@ const HadithCollection = () => {
               <p className="text-center text-muted-foreground text-sm py-10 font-body">No hadiths found.</p>
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary/20 border-t border-border">
+              <button
+                onClick={() => setPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+                className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-body text-foreground disabled:opacity-30 hover:bg-secondary/50 transition-colors"
+              >
+                ← Prev
+              </button>
+              <span className="text-[10px] text-muted-foreground font-body">
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                disabled={page >= totalPages - 1}
+                className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-body text-foreground disabled:opacity-30 hover:bg-secondary/50 transition-colors"
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>

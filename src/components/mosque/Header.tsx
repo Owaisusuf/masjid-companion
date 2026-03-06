@@ -12,7 +12,7 @@ const Header = () => {
   const ramadanActive = isRamadan();
 
   return (
-    <header className="relative min-h-[440px] sm:min-h-[500px] flex items-center justify-center overflow-hidden">
+    <header className="relative min-h-[420px] sm:min-h-[480px] flex items-center justify-center overflow-hidden">
       <img
         src={heroBg}
         alt=""
@@ -24,24 +24,24 @@ const Header = () => {
       <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
-      <div className="relative z-10 text-center px-4 pt-10 sm:pt-14 pb-10 max-w-2xl mx-auto">
-        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 text-white tracking-tight">
-          Jamia Masjid Shareef
-        </h1>
-        <p className="font-urdu text-xl sm:text-2xl text-amber-300 mb-4" dir="rtl">
-          جامع مسجد شریف
-        </p>
-
-        {/* Kalima - below title with spacing */}
-        <div className="mb-5">
+      <div className="relative z-10 text-center px-4 pt-6 sm:pt-8 pb-8 max-w-2xl mx-auto">
+        {/* Kalima - TOP, large, centered */}
+        <div className="mb-4">
           <img
             src={kalimaImg}
             alt="لا إله إلا الله محمد رسول الله"
-            className="mx-auto h-16 sm:h-20 md:h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.35)] brightness-110"
+            className="mx-auto h-20 sm:h-24 md:h-28 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,255,255,0.35)] brightness-110"
           />
         </div>
 
-        <p className="text-white/60 text-xs font-body tracking-widest uppercase mb-5">
+        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 text-white tracking-tight">
+          Jamia Masjid Shareef
+        </h1>
+        <p className="font-urdu text-xl sm:text-2xl text-amber-300 mb-3" dir="rtl">
+          جامع مسجد شریف
+        </p>
+
+        <p className="text-white/60 text-xs font-body tracking-widest uppercase mb-4">
           Your Local Prayer Companion
         </p>
 
@@ -49,7 +49,7 @@ const Header = () => {
           href={mapUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-5"
+          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-4"
         >
           <MapPin className="w-3.5 h-3.5" />
           <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
