@@ -4,7 +4,7 @@ import { Shield, Lock, Save, ArrowLeft, Settings, Clock, Megaphone, Plus, Trash2
 import { loadPrayerConfig, savePrayerConfig, getDefaultAutoTimes, type PrayerConfig } from "@/lib/prayerStore";
 import { loadAnnouncements, saveAnnouncements, getDefaultAnnouncement, type Announcement } from "@/lib/announcementStore";
 import { toast } from "@/hooks/use-toast";
-import eventImage from "@/assets/event-deeni-ijtema.jpg";
+
 
 const ADMIN_PASSWORD = "jamia@masjid";
 
