@@ -456,17 +456,17 @@ const HadithCollection = () => {
                 </div>
 
                 {/* English text */}
-                <div className="px-4 sm:px-5 py-2 sm:py-3">
+                <div className="px-4 sm:px-5 py-3 sm:py-4">
                   {h.englishNarrator && (
-                    <p className="text-sm font-body font-semibold text-primary mb-1.5">{h.englishNarrator}:</p>
+                    <p className="text-sm font-body font-semibold text-primary mb-2">{h.englishNarrator}:</p>
                   )}
-                  <p className="text-sm leading-relaxed text-foreground/85 font-body">{h.hadithEnglish}</p>
+                  <p className="text-sm leading-[1.9] text-foreground/85 font-body">{h.hadithEnglish}</p>
                 </div>
 
                 {/* Arabic text - green tint like sunnah.com */}
                 {h.hadithArabic && (
-                  <div className="px-4 sm:px-5 py-3 sm:py-4 bg-primary/[0.04]">
-                    <p className="font-arabic text-base sm:text-lg leading-[2.2] text-foreground/90 text-right" dir="rtl">
+                  <div className="px-4 sm:px-5 py-4 sm:py-5 bg-primary/[0.04]">
+                    <p className="font-arabic text-base sm:text-lg leading-[2.4] text-foreground/90 text-right" dir="rtl">
                       {h.hadithArabic}
                     </p>
                   </div>

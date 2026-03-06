@@ -40,6 +40,8 @@ const QuranBrowser = () => {
   const [search, setSearch] = useState("");
   const [selectedJuz, setSelectedJuz] = useState<number | null>(null);
   const [selectedEnglish, setSelectedEnglish] = useState(ENGLISH_EDITIONS[0].key);
+  // Track the current content source for re-fetching on translation change
+  const [currentSource, setCurrentSource] = useState<{ id: number; type: "surah" | "juz" } | null>(null);
 
   useEffect(() => {
     fetch(`${ALQURAN_API}/surah`)
@@ -79,6 +81,7 @@ const QuranBrowser = () => {
   const loadSurah = async (surah: Surah) => {
     setSelectedSurah(surah);
     setSelectedJuz(null);
+    setCurrentSource({ id: surah.number, type: "surah" });
     setLoading(true);
     try {
       const { arabic, english, urdu } = await fetchVerses(surah.number, "surah", selectedEnglish);
@@ -94,6 +97,7 @@ const QuranBrowser = () => {
   const loadJuz = async (juzNumber: number) => {
     setSelectedJuz(juzNumber);
     setSelectedSurah(null);
+    setCurrentSource({ id: juzNumber, type: "juz" });
     setLoading(true);
     try {
       const { arabic, english, urdu } = await fetchVerses(juzNumber, "juz", selectedEnglish);
@@ -106,9 +110,32 @@ const QuranBrowser = () => {
     setLoading(false);
   };
 
+  // Re-fetch when English translation is changed while reading
+  useEffect(() => {
+    if (!currentSource) return;
+    let cancelled = false;
+    const refetch = async () => {
+      setLoading(true);
+      try {
+        const { arabic, english, urdu } = await fetchVerses(currentSource.id, currentSource.type, selectedEnglish);
+        if (!cancelled) {
+          setArabicVerses(arabic);
+          setEnglishVerses(english);
+          setUrduVerses(urdu);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      if (!cancelled) setLoading(false);
+    };
+    refetch();
+    return () => { cancelled = true; };
+  }, [selectedEnglish, currentSource, fetchVerses]);
+
   const goBack = () => {
     setSelectedSurah(null);
     setSelectedJuz(null);
+    setCurrentSource(null);
     setArabicVerses([]);
     setEnglishVerses([]);
     setUrduVerses([]);
@@ -183,12 +210,12 @@ const QuranBrowser = () => {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-body text-sm font-semibold text-foreground truncate">{s.englishName}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {s.englishNameTranslation} • {s.numberOfAyahs} Ayahs • {s.revelationType === "Meccan" ? "Meccan" : "Medinan"}
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                          {s.englishNameTranslation} • {s.numberOfAyahs} Ayahs
                         </p>
                       </div>
-                      <span className="font-arabic text-lg text-accent shrink-0">{s.name}</span>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      <span className="font-arabic text-base sm:text-lg text-accent shrink-0">{s.name}</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 hidden sm:block" />
                     </button>
                   ))}
                 </div>
@@ -202,7 +229,7 @@ const QuranBrowser = () => {
                   onClick={() => loadJuz(j.number)}
                   className="p-3 rounded-xl bg-secondary/50 hover:bg-accent/10 border border-border/50 hover:border-accent/30 transition-all duration-200 text-center group"
                 >
-                  <p className="font-heading text-xl font-bold text-accent group-hover:scale-110 transition-transform">
+                  <p className="font-heading text-lg sm:text-xl font-bold text-accent group-hover:scale-110 transition-transform">
                     {j.number}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-body">Parah</p>
@@ -267,32 +294,32 @@ const QuranBrowser = () => {
               <p className="text-xs text-muted-foreground font-body">Loading Quran data...</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <div className="space-y-5 max-h-[600px] overflow-y-auto pr-1">
               {arabicVerses.map((ayah, i) => {
                 const engText = englishVerses[i]?.text;
                 const urduText = urduVerses[i]?.text;
                 return (
-                  <div key={`${ayah.number}`} className="p-4 rounded-xl bg-secondary/40 border border-border/50">
+                  <div key={`${ayah.number}`} className="p-4 sm:p-5 rounded-xl bg-secondary/40 border border-border/50">
                     {/* Verse number */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 font-body">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 font-body">
                         {ayah.numberInSurah}
                       </span>
                     </div>
                     {/* Arabic */}
-                    <p className="font-quran text-xl sm:text-2xl leading-[2.4] text-foreground text-right mb-3" dir="rtl">
+                    <p className="font-quran text-xl sm:text-2xl leading-[2.6] text-foreground text-right mb-4" dir="rtl">
                       {ayah.text}
                     </p>
                     {/* English */}
                     {engText && (
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-2">
-                        <span className="text-primary/60 font-semibold text-[10px] mr-1">EN</span> {engText}
+                      <p className="text-sm text-muted-foreground leading-[1.9] mb-4 font-body">
+                        <span className="text-primary/70 font-semibold text-[10px] mr-1.5 uppercase tracking-wide">EN</span> {engText}
                       </p>
                     )}
                     {/* Urdu */}
                     {urduText && (
-                      <p className="font-urdu text-sm text-muted-foreground" dir="rtl">
-                        <span className="text-accent/60 font-semibold text-[10px] ml-1">اردو</span> {urduText}
+                      <p className="font-urdu text-sm text-muted-foreground leading-[2.4]" dir="rtl">
+                        <span className="text-accent/70 font-semibold text-[10px] ml-1.5">اردو</span> {urduText}
                       </p>
                     )}
                   </div>
