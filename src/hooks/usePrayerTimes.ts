@@ -19,6 +19,13 @@ export interface HijriDate {
   year: string;
 }
 
+export interface GregorianDate {
+  day: string;
+  month: string;
+  year: string;
+  weekday: string;
+}
+
 function formatTo12Hour(time24: string): string {
   const [h, m] = time24.split(":").map(Number);
   const period = h >= 12 ? "PM" : "AM";
@@ -33,13 +40,14 @@ async function fetchPrayerTimes() {
   const yyyy = now.getFullYear();
 
   const res = await fetch(
-    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${LAT}&longitude=${LNG}&method=1&school=1`
+    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${LAT}&longitude=${LNG}&method=1&school=0`
   );
 
   if (!res.ok) throw new Error("Failed to fetch prayer times");
   const data = await res.json();
   const t = data.data.timings;
   const h = data.data.date.hijri;
+  const g = data.data.date.gregorian;
 
   return {
     prayers: {
@@ -56,6 +64,12 @@ async function fetchPrayerTimes() {
       monthAr: h.month.ar,
       year: h.year,
     } as HijriDate,
+    gregorian: {
+      day: g.day,
+      month: g.month.en,
+      year: g.year,
+      weekday: g.weekday.en,
+    } as GregorianDate,
   };
 }
 

@@ -3,8 +3,6 @@ import { BookOpen, ArrowLeft, Loader2, Search, BookMarked, Languages } from "luc
 
 interface HadithBook {
   key: string;
-  engEdition: string;
-  urdEdition: string;
   name: string;
   nameUrdu: string;
   hadiths: number;
@@ -18,15 +16,13 @@ interface HadithItem {
 }
 
 const hadithBooks: HadithBook[] = [
-  { key: "bukhari", engEdition: "eng-bukhari", urdEdition: "urd-bukhari", name: "Sahih al-Bukhari", nameUrdu: "صحیح بخاری", hadiths: 7563, color: "bg-emerald-600" },
-  { key: "muslim", engEdition: "eng-muslim", urdEdition: "urd-muslim", name: "Sahih Muslim", nameUrdu: "صحیح مسلم", hadiths: 3032, color: "bg-red-600" },
-  { key: "tirmidhi", engEdition: "eng-tirmidhi", urdEdition: "urd-tirmidhi", name: "Jami at-Tirmidhi", nameUrdu: "جامع ترمذی", hadiths: 3956, color: "bg-blue-600" },
-  { key: "abudawud", engEdition: "eng-abudawud", urdEdition: "urd-abudawud", name: "Sunan Abu Dawud", nameUrdu: "سنن ابو داود", hadiths: 5274, color: "bg-orange-600" },
-  { key: "nasai", engEdition: "eng-nasai", urdEdition: "urd-nasai", name: "Sunan an-Nasa'i", nameUrdu: "سنن نسائی", hadiths: 5758, color: "bg-gray-700" },
-  { key: "ibnmajah", engEdition: "eng-ibnmajah", urdEdition: "urd-ibnmajah", name: "Sunan Ibn Majah", nameUrdu: "سنن ابن ماجہ", hadiths: 4341, color: "bg-amber-600" },
+  { key: "bukhari", name: "Sahih al-Bukhari", nameUrdu: "صحیح بخاری", hadiths: 7563, color: "bg-emerald-600" },
+  { key: "muslim", name: "Sahih Muslim", nameUrdu: "صحیح مسلم", hadiths: 3032, color: "bg-red-600" },
+  { key: "tirmidhi", name: "Jami at-Tirmidhi", nameUrdu: "جامع ترمذی", hadiths: 3956, color: "bg-blue-600" },
+  { key: "abudawud", name: "Sunan Abu Dawud", nameUrdu: "سنن ابو داود", hadiths: 5274, color: "bg-orange-600" },
+  { key: "nasai", name: "Sunan an-Nasa'i", nameUrdu: "سنن نسائی", hadiths: 5758, color: "bg-gray-700" },
+  { key: "ibnmajah", name: "Sunan Ibn Majah", nameUrdu: "سنن ابن ماجہ", hadiths: 4341, color: "bg-amber-600" },
 ];
-
-const BASE_URL = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions";
 
 const HadithCollection = () => {
   const [selectedBook, setSelectedBook] = useState<HadithBook | null>(null);
@@ -37,56 +33,58 @@ const HadithCollection = () => {
   const [searchNum, setSearchNum] = useState("");
   const [error, setError] = useState("");
   const [lang, setLang] = useState<"en" | "ur">("en");
+  const [allEnData, setAllEnData] = useState<Record<number, string>>({});
+  const [allUrData, setAllUrData] = useState<Record<number, string>>({});
+  const [bookLoaded, setBookLoaded] = useState(false);
 
   const PER_PAGE = 10;
 
-  const fetchHadith = useCallback(async (edition: string, num: number): Promise<string | null> => {
-    try {
-      const res = await fetch(`${BASE_URL}/${edition}/${num}.json`);
-      if (!res.ok) {
-        const resFallback = await fetch(`${BASE_URL}/${edition}/${num}.min.json`);
-        if (!resFallback.ok) return null;
-        const d = await resFallback.json();
-        return d?.hadiths?.[0]?.text || d?.text || null;
-      }
-      const d = await res.json();
-      return d?.hadiths?.[0]?.text || d?.text || null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const loadHadiths = useCallback(async (book: HadithBook, pageNum: number, append = false) => {
+  const loadBook = useCallback(async (book: HadithBook) => {
     setLoading(true);
     setError("");
+    setBookLoaded(false);
     try {
-      const start = (pageNum - 1) * PER_PAGE + 1;
-      const nums = Array.from({ length: PER_PAGE }, (_, i) => start + i);
+      const [enRes, urRes] = await Promise.all([
+        fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-${book.key}.min.json`),
+        fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/urd-${book.key}.min.json`),
+      ]);
 
-      const results = await Promise.all(
-        nums.map(async (num) => {
-          const [en, ur] = await Promise.all([
-            fetchHadith(book.engEdition, num),
-            fetchHadith(book.urdEdition, num),
-          ]);
-          if (!en && !ur) return null;
-          return { id: num, textEn: en || "", textUr: ur || "" };
-        })
-      );
+      const enMap: Record<number, string> = {};
+      const urMap: Record<number, string> = {};
 
-      const items = results.filter(Boolean) as HadithItem[];
-
-      if (append) {
-        setHadiths(prev => [...prev, ...items]);
-      } else {
-        setHadiths(items);
+      if (enRes.ok) {
+        const enJson = await enRes.json();
+        const enHadiths = enJson?.hadiths || [];
+        enHadiths.forEach((h: { hadithnumber: number; text: string }, i: number) => {
+          enMap[h.hadithnumber || i + 1] = h.text || "";
+        });
       }
-      setHasMore(items.length === PER_PAGE);
+
+      if (urRes.ok) {
+        const urJson = await urRes.json();
+        const urHadiths = urJson?.hadiths || [];
+        urHadiths.forEach((h: { hadithnumber: number; text: string }, i: number) => {
+          urMap[h.hadithnumber || i + 1] = h.text || "";
+        });
+      }
+
+      setAllEnData(enMap);
+      setAllUrData(urMap);
+      setBookLoaded(true);
+
+      // Build first page
+      const items: HadithItem[] = [];
+      const maxNum = Math.max(Object.keys(enMap).length, Object.keys(urMap).length);
+      for (let i = 1; i <= Math.min(PER_PAGE, maxNum); i++) {
+        items.push({ id: i, textEn: enMap[i] || "", textUr: urMap[i] || "" });
+      }
+      setHadiths(items);
+      setHasMore(items.length === PER_PAGE && PER_PAGE < maxNum);
     } catch {
       setError("Failed to load hadiths. Please try again.");
     }
     setLoading(false);
-  }, [fetchHadith]);
+  }, []);
 
   const selectBook = (book: HadithBook) => {
     setSelectedBook(book);
@@ -94,40 +92,38 @@ const HadithCollection = () => {
     setHadiths([]);
     setSearchNum("");
     setError("");
-    loadHadiths(book, 1);
+    loadBook(book);
   };
 
   const loadMore = () => {
-    if (!selectedBook) return;
     const nextPage = page + 1;
     setPage(nextPage);
-    loadHadiths(selectedBook, nextPage, true);
+    const start = (nextPage - 1) * PER_PAGE + 1;
+    const maxNum = Math.max(Object.keys(allEnData).length, Object.keys(allUrData).length);
+    const items: HadithItem[] = [];
+    for (let i = start; i < start + PER_PAGE && i <= maxNum; i++) {
+      items.push({ id: i, textEn: allEnData[i] || "", textUr: allUrData[i] || "" });
+    }
+    setHadiths(prev => [...prev, ...items]);
+    setHasMore(start + PER_PAGE <= maxNum);
   };
 
-  const searchHadith = async () => {
-    if (!selectedBook || !searchNum) return;
+  const searchHadith = () => {
+    if (!searchNum) return;
     const num = parseInt(searchNum);
     if (isNaN(num) || num < 1) {
       setError("Please enter a valid hadith number");
       return;
     }
-    setLoading(true);
-    setError("");
-    try {
-      const [en, ur] = await Promise.all([
-        fetchHadith(selectedBook.engEdition, num),
-        fetchHadith(selectedBook.urdEdition, num),
-      ]);
-      if (!en && !ur) {
-        setError("Hadith not found. Try a different number.");
-      } else {
-        setHadiths([{ id: num, textEn: en || "", textUr: ur || "" }]);
-        setHasMore(false);
-      }
-    } catch {
+    const en = allEnData[num];
+    const ur = allUrData[num];
+    if (!en && !ur) {
       setError("Hadith not found. Try a different number.");
+      return;
     }
-    setLoading(false);
+    setHadiths([{ id: num, textEn: en || "", textUr: ur || "" }]);
+    setHasMore(false);
+    setError("");
   };
 
   return (
@@ -160,9 +156,9 @@ const HadithCollection = () => {
       ) : (
         <div className="glass-card p-4 sm:p-6">
           {/* Toolbar */}
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
             <button
-              onClick={() => { setSelectedBook(null); setHadiths([]); setError(""); }}
+              onClick={() => { setSelectedBook(null); setHadiths([]); setError(""); setBookLoaded(false); }}
               className="flex items-center gap-1.5 text-primary hover:text-accent transition-colors text-sm font-body font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back
@@ -173,31 +169,34 @@ const HadithCollection = () => {
               <p className="font-urdu text-sm text-accent" dir="rtl">{selectedBook.nameUrdu}</p>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Language toggle */}
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setLang(lang === "en" ? "ur" : "en")}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary border border-border text-xs font-body font-medium hover:bg-primary/5 transition-colors"
                 title={lang === "en" ? "Switch to Urdu" : "Switch to English"}
               >
                 <Languages className="w-3.5 h-3.5 text-primary" />
-                <span className="text-foreground">{lang === "en" ? "EN" : "اردو"}</span>
+                <span className="text-foreground">{lang === "en" ? "English" : "اردو"}</span>
               </button>
 
-              <input
-                type="number"
-                placeholder="Hadith #"
-                value={searchNum}
-                onChange={(e) => setSearchNum(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchHadith()}
-                className="w-20 sm:w-24 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-xs font-body placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/50"
-              />
-              <button
-                onClick={searchHadith}
-                className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs hover:opacity-90 transition-opacity"
-              >
-                <Search className="w-4 h-4" />
-              </button>
+              {bookLoaded && (
+                <>
+                  <input
+                    type="number"
+                    placeholder="Hadith #"
+                    value={searchNum}
+                    onChange={(e) => setSearchNum(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && searchHadith()}
+                    className="w-20 sm:w-24 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-xs font-body placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                  <button
+                    onClick={searchHadith}
+                    className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs hover:opacity-90 transition-opacity"
+                  >
+                    <Search className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

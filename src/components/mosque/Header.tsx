@@ -2,6 +2,7 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
 import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import kalimaImg from "@/assets/kalima.png";
 
 const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
 
@@ -24,9 +25,11 @@ const Header = () => {
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
       <div className="relative z-10 text-center px-4 py-12 max-w-2xl mx-auto">
-        <p className="font-quran text-3xl sm:text-4xl md:text-5xl text-white/90 mb-12 leading-relaxed" dir="rtl">
-          بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-        </p>
+        <img
+          src={kalimaImg}
+          alt="La ilaha illallah Muhammadur Rasulullah"
+          className="w-56 sm:w-72 md:w-80 mx-auto mb-10 opacity-90 drop-shadow-lg"
+        />
 
         <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">
           Jamia Masjid Shareef
