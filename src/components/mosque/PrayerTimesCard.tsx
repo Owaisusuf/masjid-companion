@@ -2,32 +2,7 @@ import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-/**
- * Fixed Masjid Prayer Schedule (Jama'at times)
- * Zuhr: 1:15 PM all year
- * Asr: 4:45 PM (Jan 1 – Mar 14), 4:50 PM (Mar 15+)
- * Other times: Fixed as per masjid board
- */
-function getMasjidTimes() {
-  const now = new Date();
-  const month = now.getMonth() + 1; // 1-indexed
-  const day = now.getDate();
-
-  // Asr rule: before March 15 = 4:45 PM, March 15 onward = 4:50 PM
-  let asrTime = "4:45 PM";
-  if (month > 3 || (month === 3 && day >= 15)) {
-    asrTime = "4:50 PM";
-  }
-
-  return {
-    Fajr: "5:55 AM",
-    Dhuhr: "1:15 PM",
-    Asr: asrTime,
-    Maghrib: "6:43 PM",
-    Isha: "8:10 PM",
-  };
-}
+import { getActivePrayerTimes } from "@/lib/prayerStore";
 
 const prayerNames = [
   { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
@@ -69,14 +44,19 @@ function getTimeUntil(time12: string): string {
 
 const PrayerTimesCard = () => {
   const { data, isLoading } = usePrayerTimes();
-  const masjidTimes = getMasjidTimes();
+  const [masjidTimes, setMasjidTimes] = useState(getActivePrayerTimes());
   const [nextPrayer, setNextPrayer] = useState<string | null>(null);
 
   useEffect(() => {
-    const update = () => setNextPrayer(getNextPrayer(masjidTimes));
+    const update = () => {
+      const times = getActivePrayerTimes();
+      setMasjidTimes(times);
+      setNextPrayer(getNextPrayer(times));
+    };
     update();
-    const timer = setInterval(update, 60000);
-    return () => clearInterval(timer);
+    const timer = setInterval(update, 30000);
+    window.addEventListener("storage", update);
+    return () => { clearInterval(timer); window.removeEventListener("storage", update); };
   }, []);
 
   return (
@@ -87,7 +67,6 @@ const PrayerTimesCard = () => {
         <span className="font-urdu text-sm text-muted-foreground">اوقاتِ نماز</span>
       </div>
 
-      {/* Date display */}
       {data?.gregorian && data?.hijri ? (
         <div className="glass-card p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm">
