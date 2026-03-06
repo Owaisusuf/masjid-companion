@@ -25,15 +25,10 @@ const PrayerAlarm = () => {
   });
   const [alertPrayer, setAlertPrayer] = useState<string | null>(null);
   const [notifiedToday, setNotifiedToday] = useState<Set<string>>(new Set());
-  const [showBanner, setShowBanner] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(() => {
+    try { return !localStorage.getItem("prayer-alarm-banner-dismissed"); } catch { return true; }
+  });
   const audioRef = useRef<AudioContext | null>(null);
-
-  // Show a banner on first visit to encourage enabling
-  useEffect(() => {
-    if (!enabled && !localStorage.getItem("prayer-alarm-banner-dismissed")) {
-      setShowBanner(true);
-    }
-  }, [enabled]);
 
   const playAdhanTone = useCallback(() => {
     try {
@@ -76,29 +71,29 @@ const PrayerAlarm = () => {
       if (perm === "granted") {
         setEnabled(true);
         localStorage.setItem("prayer-alarm-enabled", "true");
-        setShowBanner(false);
+        setShowTooltip(false);
+        localStorage.setItem("prayer-alarm-banner-dismissed", "true");
       }
     } else {
       setEnabled(true);
       localStorage.setItem("prayer-alarm-enabled", "true");
-      setShowBanner(false);
+      setShowTooltip(false);
+      localStorage.setItem("prayer-alarm-banner-dismissed", "true");
     }
   }, [enabled]);
 
-  const dismissBanner = () => {
-    setShowBanner(false);
+  const dismissTooltip = () => {
+    setShowTooltip(false);
     localStorage.setItem("prayer-alarm-banner-dismissed", "true");
   };
 
   useEffect(() => {
     if (!enabled) return;
-
     const check = () => {
       const now = new Date();
       const nowH = now.getHours();
       const nowM = now.getMinutes();
       const prayers = getActivePrayerTimes();
-
       for (const key of PRAYER_KEYS) {
         if (!prayers[key] || notifiedToday.has(key)) continue;
         const { h, m } = parseTimeTo24(prayers[key]);
@@ -106,7 +101,6 @@ const PrayerAlarm = () => {
           setAlertPrayer(key);
           setNotifiedToday(prev => new Set(prev).add(key));
           playAdhanTone();
-
           if ("Notification" in window && Notification.permission === "granted") {
             new Notification(`🕌 ${PRAYER_LABELS[key] || key}`, {
               body: `It's time for ${key} prayer — حَيَّ عَلَى الصَّلَاة`,
@@ -116,13 +110,11 @@ const PrayerAlarm = () => {
         }
       }
     };
-
     const interval = setInterval(check, 15000);
     check();
     return () => clearInterval(interval);
   }, [enabled, notifiedToday, playAdhanTone]);
 
-  // Reset notified set at midnight
   useEffect(() => {
     const checkMidnight = () => {
       const now = new Date();
@@ -136,40 +128,36 @@ const PrayerAlarm = () => {
 
   return (
     <>
-      {/* Promotion banner at the top */}
-      {showBanner && !enabled && (
-        <div className="fixed top-0 left-0 right-0 z-[90] bg-primary text-primary-foreground px-4 py-2.5 flex items-center justify-center gap-3 shadow-lg animate-in slide-in-from-top duration-300">
-          <BellRing className="w-4 h-4 shrink-0 animate-pulse" />
-          <p className="text-xs sm:text-sm font-body font-medium">
-            Enable Prayer Alarm to get notified at prayer times
-          </p>
-          <button
-            onClick={toggleAlarm}
-            className="px-3 py-1 text-xs rounded-lg bg-primary-foreground text-primary font-semibold hover:opacity-90 transition-opacity"
-          >
-            Enable
-          </button>
-          <button onClick={dismissBanner} className="text-primary-foreground/70 hover:text-primary-foreground ml-1">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {/* Side floating alarm toggle with tooltip */}
+      <div className="fixed bottom-6 right-6 z-50 flex items-end gap-2">
+        {/* Tooltip / CTA beside the button */}
+        {showTooltip && !enabled && (
+          <div className="bg-card border border-border shadow-xl rounded-xl px-3 py-2 flex items-center gap-2 animate-in slide-in-from-right duration-300 max-w-[200px]">
+            <BellRing className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+            <p className="text-[11px] font-body text-foreground leading-tight">
+              Enable <span className="font-semibold text-primary">Prayer Alarm</span> for notifications
+            </p>
+            <button onClick={dismissTooltip} className="text-muted-foreground hover:text-foreground shrink-0">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
 
-      {/* Floating alarm toggle */}
-      <button
-        onClick={toggleAlarm}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex flex-col items-center justify-center transition-all duration-300 gap-0.5 ${
-          enabled
-            ? "bg-primary text-primary-foreground shadow-primary/30 ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
-            : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-primary"
-        }`}
-        title={enabled ? "Prayer alarm is ON — click to disable" : "Enable prayer alarm"}
-      >
-        {enabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
-        <span className="text-[8px] font-bold font-body leading-none">
-          {enabled ? "ON" : "OFF"}
-        </span>
-      </button>
+        <button
+          onClick={toggleAlarm}
+          className={`w-14 h-14 rounded-full shadow-lg flex flex-col items-center justify-center transition-all duration-300 gap-0.5 ${
+            enabled
+              ? "bg-primary text-primary-foreground shadow-primary/30 ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
+              : "bg-card text-muted-foreground border border-border hover:border-primary/30 hover:text-primary"
+          }`}
+          title={enabled ? "Prayer alarm is ON — click to disable" : "Enable prayer alarm"}
+        >
+          {enabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
+          <span className="text-[8px] font-bold font-body leading-none">
+            {enabled ? "ON" : "OFF"}
+          </span>
+        </button>
+      </div>
 
       {/* Alert modal */}
       {alertPrayer && (
