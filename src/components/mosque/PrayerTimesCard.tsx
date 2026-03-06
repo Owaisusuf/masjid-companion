@@ -32,7 +32,6 @@ function getMasjidTimes() {
 
 const prayerNames = [
   { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
-  { key: "Sunrise", label: "Sunrise", urdu: "طلوع آفتاب", Icon: Sunrise },
   { key: "Dhuhr", label: "Zuhr", urdu: "ظہر", Icon: Sun },
   { key: "Asr", label: "Asr", urdu: "عصر", Icon: CloudSun },
   { key: "Maghrib", label: "Maghrib", urdu: "مغرب", Icon: Sunset },
