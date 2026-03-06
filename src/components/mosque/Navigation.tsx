@@ -11,6 +11,7 @@ const navItems = [
   { label: "دعائیں", en: "Duas", href: "#duas" },
   { label: "اسماء", en: "Names", href: "#names" },
   { label: "تسبیح", en: "Tasbih", href: "#tasbih" },
+  { label: "ایڈمن", en: "Admin", href: "/admin", isLink: true },
 ];
 
 const Navigation = () => {

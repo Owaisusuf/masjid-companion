@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Compass, Navigation, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Compass, Navigation, Loader2, RotateCw } from "lucide-react";
 
 const KAABA_LAT = 21.4225;
 const KAABA_LNG = 39.8262;
@@ -7,43 +7,68 @@ const KAABA_LNG = 39.8262;
 function calculateQibla(lat: number, lng: number): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const toDeg = (r: number) => (r * 180) / Math.PI;
-  const latRad = toRad(lat);
-  const kaabaLatRad = toRad(KAABA_LAT);
+
+  const lat1 = toRad(lat);
+  const lat2 = toRad(KAABA_LAT);
   const dLng = toRad(KAABA_LNG - lng);
-  const x = Math.sin(dLng);
-  const y = Math.cos(latRad) * Math.tan(kaabaLatRad) - Math.sin(latRad) * Math.cos(dLng);
+
+  const x = Math.sin(dLng) * Math.cos(lat2);
+  const y = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+
   let bearing = toDeg(Math.atan2(x, y));
   return (bearing + 360) % 360;
 }
 
+function getDirectionLabel(deg: number): string {
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const index = Math.round(deg / 22.5) % 16;
+  return dirs[index];
+}
+
 const QiblaFinder = () => {
   const [qiblaAngle, setQiblaAngle] = useState<number | null>(null);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
   const [compassHeading, setCompassHeading] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hasCompass, setHasCompass] = useState(false);
   const compassRef = useRef<number>(0);
 
-  const findQibla = () => {
+  const findQibla = useCallback(() => {
     if (!navigator.geolocation) {
-      setError("Location is not supported in your browser");
+      setError("Geolocation is not supported by your browser");
       return;
     }
     setLoading(true);
     setError("");
+    setQiblaAngle(null);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const angle = calculateQibla(pos.coords.latitude, pos.coords.longitude);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserLat(lat);
+        setUserLng(lng);
+        const angle = calculateQibla(lat, lng);
         setQiblaAngle(Math.round(angle * 10) / 10);
         setLoading(false);
       },
-      () => {
-        const angle = calculateQibla(34.0522129, 74.7997336);
+      (err) => {
+        console.warn("Geolocation error, using default (Srinagar):", err.message);
+        // Default: Srinagar, J&K
+        const lat = 34.0522129;
+        const lng = 74.7997336;
+        setUserLat(lat);
+        setUserLng(lng);
+        const angle = calculateQibla(lat, lng);
         setQiblaAngle(Math.round(angle * 10) / 10);
         setLoading(false);
-      }
+        setError("Using default location (Srinagar). Allow location access for precise results.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  };
+  }, []);
 
   useEffect(() => {
     const handler = (e: DeviceOrientationEvent) => {
@@ -72,7 +97,7 @@ const QiblaFinder = () => {
       </div>
 
       <div className="glass-card p-6 sm:p-8 text-center glow-primary">
-        {qiblaAngle === null ? (
+        {qiblaAngle === null && !loading ? (
           <div>
             <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-secondary border-2 border-border flex items-center justify-center">
               <Compass className="w-12 h-12 text-muted-foreground" />
@@ -85,41 +110,69 @@ const QiblaFinder = () => {
               disabled={loading}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-              {loading ? "Finding..." : "Find Qibla Direction"}
+              <Navigation className="w-4 h-4" />
+              Find Qibla Direction
             </button>
             {error && <p className="text-destructive text-xs mt-3">{error}</p>}
           </div>
+        ) : loading ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground font-body">Detecting your location...</p>
+          </div>
         ) : (
           <div>
-            <div className="relative w-44 h-44 sm:w-52 sm:h-52 mx-auto mb-5">
+            {/* Compass */}
+            <div className="relative w-48 h-48 sm:w-56 sm:h-56 mx-auto mb-5">
+              {/* Outer ring with degree marks */}
               <div className="absolute inset-0 rounded-full border-2 border-border bg-secondary/50" />
-              <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-body font-bold text-muted-foreground">N</span>
+              
+              {/* Cardinal directions */}
+              <span className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-body font-bold text-primary">N</span>
               <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-body font-bold text-muted-foreground">S</span>
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-body font-bold text-muted-foreground">E</span>
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-body font-bold text-muted-foreground">W</span>
+
+              {/* Needle pointing to Qibla */}
               <div
-                className="absolute inset-4 flex items-center justify-center transition-transform duration-300"
+                className="absolute inset-4 flex items-center justify-center transition-transform duration-500 ease-out"
                 style={{ transform: `rotate(${needleRotation}deg)` }}
               >
                 <div className="w-1 h-1/2 relative">
-                  <div className="absolute bottom-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[36px] border-l-transparent border-r-transparent border-b-primary" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[28px] border-l-transparent border-r-transparent border-t-muted-foreground/20" />
+                  {/* Qibla arrow (green/primary) */}
+                  <div className="absolute bottom-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[40px] border-l-transparent border-r-transparent border-b-primary drop-shadow-md" />
+                  {/* Back arrow (faded) */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[7px] border-r-[7px] border-t-[30px] border-l-transparent border-r-transparent border-t-muted-foreground/15" />
                 </div>
               </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-accent shadow-md" />
+
+              {/* Center dot */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent border-2 border-accent shadow-lg" />
             </div>
 
-            <p className="font-heading text-3xl font-bold text-primary mb-1">{qiblaAngle}°</p>
-            <p className="text-muted-foreground text-sm mb-1 font-body">from North</p>
-            <p className="font-arabic text-accent text-lg mb-3">🕋 اَلْکَعْبَۃُ الْمُشَرَّفَۃ</p>
-            {hasCompass && (
-              <p className="text-[10px] text-primary/70 font-body mb-2">Live compass active</p>
+            <p className="font-heading text-3xl font-bold text-primary mb-0.5">{qiblaAngle}°</p>
+            <p className="text-muted-foreground text-sm mb-1 font-body">
+              {getDirectionLabel(qiblaAngle!)} from North
+            </p>
+            <p className="font-arabic text-accent text-lg mb-1">🕋 الكعبة المشرفة</p>
+
+            {userLat !== null && userLng !== null && (
+              <p className="text-[10px] text-muted-foreground/60 font-body mb-2">
+                From: {userLat.toFixed(4)}°N, {userLng.toFixed(4)}°E
+              </p>
             )}
+
+            {hasCompass && (
+              <p className="text-[10px] text-primary/70 font-body mb-2">● Live compass active</p>
+            )}
+
+            {error && <p className="text-amber-600 text-xs mb-2 font-body">{error}</p>}
+
             <button
               onClick={findQibla}
-              className="text-xs text-primary hover:text-accent transition-colors underline underline-offset-2 font-body"
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-accent transition-colors font-body font-medium mt-1"
             >
+              <RotateCw className="w-3.5 h-3.5" />
               Recalculate
             </button>
           </div>
