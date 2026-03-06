@@ -109,7 +109,7 @@ const PrayerTimesCard = () => {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      <div className="grid grid-cols-5 gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;
