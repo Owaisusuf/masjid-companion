@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { getActiveAnnouncements, type Announcement } from "@/lib/announcementStore";
 
-const DISMISSED_KEY = "dismissed-announcements";
-
 const AnnouncementPopup = () => {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [visible, setVisible] = useState(false);
@@ -12,20 +10,9 @@ const AnnouncementPopup = () => {
     const check = () => {
       const active = getActiveAnnouncements();
       if (!active.length) { setAnnouncement(null); setVisible(false); return; }
-
-      try {
-        const dismissed: Record<string, string> = JSON.parse(localStorage.getItem(DISMISSED_KEY) || "{}");
-        const today = new Date().toISOString().slice(0, 10);
-        // Show first announcement not dismissed today
-        const toShow = active.find(a => dismissed[a.id] !== today);
-        if (toShow) {
-          setAnnouncement(toShow);
-          setTimeout(() => setVisible(true), 500);
-        }
-      } catch {
-        setAnnouncement(active[0]);
-        setTimeout(() => setVisible(true), 500);
-      }
+      // Always show the first active announcement on every load/refresh
+      setAnnouncement(active[0]);
+      setTimeout(() => setVisible(true), 500);
     };
 
     check();
@@ -36,11 +23,6 @@ const AnnouncementPopup = () => {
   const dismiss = () => {
     if (!announcement) return;
     setVisible(false);
-    try {
-      const dismissed: Record<string, string> = JSON.parse(localStorage.getItem(DISMISSED_KEY) || "{}");
-      dismissed[announcement.id] = new Date().toISOString().slice(0, 10);
-      localStorage.setItem(DISMISSED_KEY, JSON.stringify(dismissed));
-    } catch { /* ignore */ }
     setTimeout(() => setAnnouncement(null), 300);
   };
 

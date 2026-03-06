@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X, Shield } from "lucide-react";
-import minarLogo from "@/assets/minar-logo.png";
+import mosqueLogo from "@/assets/mosque-logo.png";
 
 const navItems = [
   { label: "نماز", en: "Prayer", href: "#prayers" },
@@ -28,7 +28,7 @@ const Navigation = () => {
     <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border shadow-sm">
       <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
         <a href="#" className="flex items-center gap-2">
-          <img src={minarLogo} alt="Jamia Masjid" className="w-7 h-7 object-contain" />
+          <img src={mosqueLogo} alt="Jamia Masjid Shareef" className="w-8 h-8 object-contain" />
           <span className="font-heading font-bold text-primary text-sm sm:text-base">
             Jamia Masjid
           </span>

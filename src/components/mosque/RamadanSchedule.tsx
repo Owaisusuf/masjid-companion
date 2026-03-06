@@ -19,6 +19,17 @@ function formatCountdown(ms: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
+// Dates (khajoor) icon SVG
+const DatesIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <ellipse cx="8" cy="14" rx="3" ry="5" />
+    <ellipse cx="16" cy="14" rx="3" ry="5" />
+    <path d="M8 9c0-3 2-5 4-7" />
+    <path d="M16 9c0-3-2-5-4-7" />
+    <path d="M12 2v4" />
+  </svg>
+);
+
 const RamadanSchedule = () => {
   const todayRamadan = getTodayRamadan();
   const ramadanActive = isRamadan();
@@ -31,15 +42,42 @@ const RamadanSchedule = () => {
       const now = new Date();
       const iftarTime = parseTime(todayRamadan.iftar);
       const sehriTime = parseTime(todayRamadan.sehri);
+      const THREE_MIN = 3 * 60 * 1000;
+
       if (now < sehriTime) {
         setCountdownLabel("سحری ختم ہونے میں");
         setCountdown(formatCountdown(sehriTime.getTime() - now.getTime()));
+      } else if (now.getTime() < sehriTime.getTime() + THREE_MIN) {
+        // Within 3 minutes after sehri ends, show transition
+        setCountdownLabel("سحری کا وقت ختم ہوا — افطار تک انتظار");
+        const remaining = iftarTime.getTime() - now.getTime();
+        setCountdown(formatCountdown(remaining > 0 ? remaining : 0));
       } else if (now < iftarTime) {
         setCountdownLabel("افطار میں");
         setCountdown(formatCountdown(iftarTime.getTime() - now.getTime()));
-      } else {
-        setCountdownLabel("افطار کا وقت گزر گیا");
+      } else if (now.getTime() < iftarTime.getTime() + THREE_MIN) {
+        // Within 3 minutes after iftar, show completion message
+        setCountdownLabel("افطار مبارک!");
         setCountdown("الحمد لله");
+      } else {
+        // After 3 minutes of iftar, show next day sehri countdown
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        // Find tomorrow's schedule
+        const tomorrowDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+        const tomorrowEntry = ramadanSchedule.find(d => d.date === tomorrowDate);
+        if (tomorrowEntry) {
+          const [tTime, tPeriod] = tomorrowEntry.sehri.split(" ");
+          let [tH, tM] = tTime.split(":").map(Number);
+          if (tPeriod === "PM" && tH !== 12) tH += 12;
+          if (tPeriod === "AM" && tH === 12) tH = 0;
+          const nextSehri = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), tH, tM, 0);
+          setCountdownLabel("اگلی سحری میں");
+          setCountdown(formatCountdown(nextSehri.getTime() - now.getTime()));
+        } else {
+          setCountdownLabel("رمضان مبارک");
+          setCountdown("الحمد لله");
+        }
       }
     }, 1000);
     return () => clearInterval(timer);
@@ -70,12 +108,7 @@ const RamadanSchedule = () => {
             </div>
             <div className="text-center p-3 sm:p-4 rounded-xl bg-secondary border border-border">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2c0 0-2 2-2 6s2 6 2 6" />
-                  <path d="M12 2c0 0 2 2 2 6s-2 6-2 6" />
-                  <path d="M12 14v8" />
-                  <path d="M8 22h8" />
-                </svg>
+                <DatesIcon className="w-4 h-4 text-accent" />
                 <p className="font-urdu text-xs text-muted-foreground" dir="rtl">افطار</p>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-accent font-heading">{todayRamadan.iftar}</p>
