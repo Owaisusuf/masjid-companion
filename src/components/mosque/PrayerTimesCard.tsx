@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
-import { Clock, Moon, Sunrise, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
+import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -22,7 +22,6 @@ function getMasjidTimes() {
 
   return {
     Fajr: "5:55 AM",
-    Sunrise: "6:55 AM",
     Dhuhr: "1:15 PM",
     Asr: asrTime,
     Maghrib: "6:43 PM",
@@ -32,7 +31,6 @@ function getMasjidTimes() {
 
 const prayerNames = [
   { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
-  { key: "Sunrise", label: "Sunrise", urdu: "طلوع آفتاب", Icon: Sunrise },
   { key: "Dhuhr", label: "Zuhr", urdu: "ظہر", Icon: Sun },
   { key: "Asr", label: "Asr", urdu: "عصر", Icon: CloudSun },
   { key: "Maghrib", label: "Maghrib", urdu: "مغرب", Icon: Sunset },
@@ -50,7 +48,7 @@ function parseTimeToMinutes(time12: string): number {
 function getNextPrayer(prayers: Record<string, string>): string | null {
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const order = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+  const order = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
   for (const key of order) {
     if (prayers[key] && parseTimeToMinutes(prayers[key]) > nowMinutes) return key;
   }
@@ -111,7 +109,7 @@ const PrayerTimesCard = () => {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      <div className="grid grid-cols-5 gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;

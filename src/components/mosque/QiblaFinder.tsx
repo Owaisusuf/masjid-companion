@@ -112,7 +112,7 @@ const QiblaFinder = () => {
 
             <p className="font-heading text-3xl font-bold text-primary mb-1">{qiblaAngle}°</p>
             <p className="text-muted-foreground text-sm mb-1 font-body">from North</p>
-            <p className="font-arabic text-accent text-lg mb-3">🕋 الكعبة المشرفة</p>
+            <p className="font-arabic text-accent text-lg mb-3">🕋 اَلْکَعْبَۃُ الْمُشَرَّفَۃ</p>
             {hasCompass && (
               <p className="text-[10px] text-primary/70 font-body mb-2">Live compass active</p>
             )}
