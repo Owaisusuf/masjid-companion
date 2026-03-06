@@ -89,7 +89,8 @@ const RamadanSchedule = () => {
               <tr>
                 <th className="px-3 py-3 text-left font-body font-semibold text-muted-foreground text-xs">Day</th>
                 <th className="px-3 py-3 text-left font-body font-semibold text-muted-foreground text-xs">Date</th>
-                <th className="px-3 py-3 text-left font-body font-semibold text-muted-foreground text-xs hidden sm:table-cell">Day</th>
+                <th className="px-3 py-3 text-left font-body font-semibold text-muted-foreground text-xs">Day</th>
+                <th className="px-3 py-3 text-left font-body font-semibold text-muted-foreground text-xs hidden sm:table-cell">دن</th>
                 <th className="px-3 py-3 text-center font-body font-semibold text-muted-foreground text-xs">Sehri</th>
                 <th className="px-3 py-3 text-center font-body font-semibold text-muted-foreground text-xs">Iftar</th>
               </tr>
