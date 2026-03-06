@@ -35,6 +35,7 @@ const RamadanSchedule = () => {
   const ramadanActive = isRamadan();
   const [countdown, setCountdown] = useState("");
   const [countdownLabel, setCountdownLabel] = useState("");
+  const [displayEntry, setDisplayEntry] = useState(todayRamadan);
 
   useEffect(() => {
     if (!todayRamadan) return;
@@ -47,23 +48,23 @@ const RamadanSchedule = () => {
       if (now < sehriTime) {
         setCountdownLabel("سحری ختم ہونے میں");
         setCountdown(formatCountdown(sehriTime.getTime() - now.getTime()));
+        setDisplayEntry(todayRamadan);
       } else if (now.getTime() < sehriTime.getTime() + THREE_MIN) {
-        // Within 3 minutes after sehri ends, show transition
         setCountdownLabel("سحری کا وقت ختم ہوا — افطار تک انتظار");
         const remaining = iftarTime.getTime() - now.getTime();
         setCountdown(formatCountdown(remaining > 0 ? remaining : 0));
+        setDisplayEntry(todayRamadan);
       } else if (now < iftarTime) {
         setCountdownLabel("افطار میں");
         setCountdown(formatCountdown(iftarTime.getTime() - now.getTime()));
+        setDisplayEntry(todayRamadan);
       } else if (now.getTime() < iftarTime.getTime() + THREE_MIN) {
-        // Within 3 minutes after iftar, show completion message
         setCountdownLabel("افطار مبارک!");
         setCountdown("الحمد لله");
+        setDisplayEntry(todayRamadan);
       } else {
-        // After 3 minutes of iftar, show next day sehri countdown
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        // Find tomorrow's schedule
         const tomorrowDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
         const tomorrowEntry = ramadanSchedule.find(d => d.date === tomorrowDate);
         if (tomorrowEntry) {
@@ -74,9 +75,11 @@ const RamadanSchedule = () => {
           const nextSehri = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), tH, tM, 0);
           setCountdownLabel("اگلی سحری میں");
           setCountdown(formatCountdown(nextSehri.getTime() - now.getTime()));
+          setDisplayEntry(tomorrowEntry);
         } else {
           setCountdownLabel("رمضان مبارک");
           setCountdown("الحمد لله");
+          setDisplayEntry(todayRamadan);
         }
       }
     }, 1000);
