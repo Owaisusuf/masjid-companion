@@ -24,22 +24,22 @@ const Header = () => {
       <div className="absolute top-8 left-8 w-20 h-20 border-t-2 border-l-2 border-white/20 rounded-tl-3xl hidden sm:block" />
       <div className="absolute top-8 right-8 w-20 h-20 border-t-2 border-r-2 border-white/20 rounded-tr-3xl hidden sm:block" />
 
-      <div className="relative z-10 text-center px-4 pt-4 pb-10 max-w-2xl mx-auto">
-        {/* Kalima - Top Center, Large */}
-        <div className="mb-5">
-          <img
-            src={kalimaImg}
-            alt="لا إله إلا الله محمد رسول الله"
-            className="mx-auto h-24 sm:h-32 md:h-40 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.35)] brightness-110"
-          />
-        </div>
-
-        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-white tracking-tight">
+      <div className="relative z-10 text-center px-4 pt-10 sm:pt-14 pb-10 max-w-2xl mx-auto">
+        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 text-white tracking-tight">
           Jamia Masjid Shareef
         </h1>
         <p className="font-urdu text-xl sm:text-2xl text-amber-300 mb-4" dir="rtl">
           جامع مسجد شریف
         </p>
+
+        {/* Kalima - below title with spacing */}
+        <div className="mb-5">
+          <img
+            src={kalimaImg}
+            alt="لا إله إلا الله محمد رسول الله"
+            className="mx-auto h-16 sm:h-20 md:h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.35)] brightness-110"
+          />
+        </div>
 
         <p className="text-white/60 text-xs font-body tracking-widest uppercase mb-5">
           Your Local Prayer Companion

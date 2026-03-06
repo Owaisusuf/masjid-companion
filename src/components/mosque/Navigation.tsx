@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Menu, X, Shield } from "lucide-react";
 import minarLogo from "@/assets/minar-logo.png";
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   const scrollTo = (href: string) => {
     setOpen(false);
@@ -42,6 +44,13 @@ const Navigation = () => {
               {item.en}
             </button>
           ))}
+          <button
+            onClick={() => navigate("/admin")}
+            className="px-3 py-1.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 font-body font-medium transition-all rounded-lg flex items-center gap-1"
+          >
+            <Shield className="w-3 h-3" />
+            Admin
+          </button>
         </div>
 
         <button onClick={() => setOpen(!open)} className="md:hidden text-foreground p-2">
@@ -61,6 +70,15 @@ const Navigation = () => {
               <span className="font-urdu text-xs text-muted-foreground">{item.label}</span>
             </button>
           ))}
+          <button
+            onClick={() => { setOpen(false); navigate("/admin"); }}
+            className="w-full flex items-center justify-between py-3 border-b border-border/50 text-left"
+          >
+            <span className="font-body text-sm text-foreground font-medium flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" /> Admin
+            </span>
+            <span className="font-urdu text-xs text-muted-foreground">ایڈمن</span>
+          </button>
         </div>
       )}
     </nav>
