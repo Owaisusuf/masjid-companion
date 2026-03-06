@@ -26,11 +26,11 @@ const Header = () => {
 
       <div className="relative z-10 text-center px-4 pt-6 sm:pt-8 pb-8 max-w-2xl mx-auto">
         {/* Kalima - TOP, large, centered */}
-        <div className="mb-2">
+        <div className="mb-1">
           <img
             src={kalimaImg}
             alt="لا إله إلا الله محمد رسول الله"
-            className="mx-auto h-24 sm:h-28 md:h-32 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,255,255,0.35)] brightness-110"
+            className="mx-auto h-32 sm:h-40 md:h-48 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,255,255,0.35)] brightness-110"
           />
         </div>
 
@@ -52,7 +52,7 @@ const Header = () => {
           className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs sm:text-sm mb-4"
         >
           <MapPin className="w-3.5 h-3.5" />
-          <span>Old Barzulla, Near Eidgah, Srinagar, J&K 190005</span>
+          <span>3Q2X+VW6, Old Barzallah, Srinagar, Jammu and Kashmir 190005</span>
         </a>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-1">

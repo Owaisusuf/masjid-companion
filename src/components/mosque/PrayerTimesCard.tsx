@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
-import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
+import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar, Landmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getActivePrayerTimes } from "@/lib/prayerStore";
 
@@ -42,6 +42,12 @@ function getTimeUntil(time12: string): string {
   return `${h}h ${m}m`;
 }
 
+function isJummahToday(): boolean {
+  return new Date().getDay() === 5; // Friday
+}
+
+const JUMMAH_TIME = "1:30 PM";
+
 const PrayerTimesCard = () => {
   const { data, isLoading } = usePrayerTimes();
   const [masjidTimes, setMasjidTimes] = useState(getActivePrayerTimes());
@@ -51,13 +57,20 @@ const PrayerTimesCard = () => {
     const update = () => {
       const times = getActivePrayerTimes();
       setMasjidTimes(times);
-      setNextPrayer(getNextPrayer(times));
+      // Include Jummah in next prayer calculation on Fridays
+      const allTimes: Record<string, string> = { ...times };
+      if (isJummahToday()) {
+        allTimes["Jummah"] = JUMMAH_TIME;
+      }
+      setNextPrayer(getNextPrayer(allTimes));
     };
     update();
     const timer = setInterval(update, 30000);
     window.addEventListener("storage", update);
     return () => { clearInterval(timer); window.removeEventListener("storage", update); };
   }, []);
+
+  const showJummah = isJummahToday();
 
   return (
     <section id="prayers" className="px-4 max-w-5xl mx-auto">
@@ -88,8 +101,23 @@ const PrayerTimesCard = () => {
         </div>
       ) : null}
 
-      {/* Mobile: 2 cols top + 3 cols bottom. Desktop: 5 cols */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+      {/* Jummah banner on Fridays */}
+      {showJummah && (
+        <div className="glass-card glow-primary p-3 mb-3 flex items-center justify-center gap-3">
+          <Landmark className="w-5 h-5 text-primary shrink-0" />
+          <div className="text-center">
+            <p className="font-heading text-sm font-bold text-foreground">
+              Jummah Mubarak — <span className="font-urdu text-accent">جمعہ مبارک</span>
+            </p>
+            <p className="text-xs text-muted-foreground font-body">
+              Jummah Prayer: <span className="font-semibold text-primary">{JUMMAH_TIME}</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Prayer cards grid */}
+      <div className={`grid grid-cols-2 sm:grid-cols-${showJummah ? '6' : '5'} gap-2 sm:gap-3`}>
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;
@@ -99,7 +127,7 @@ const PrayerTimesCard = () => {
               key={p.key}
               className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 ${
                 isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md"
-              } ${p.key === "Isha" ? "col-span-2 sm:col-span-1" : ""}`}
+              } ${p.key === "Isha" && !showJummah ? "col-span-2 sm:col-span-1" : ""}`}
             >
               <IconComp className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${isNext ? "text-primary" : "text-accent"}`} />
               <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
@@ -115,10 +143,31 @@ const PrayerTimesCard = () => {
             </div>
           );
         })}
+
+        {/* Jummah card - only on Fridays */}
+        {showJummah && (
+          <div
+            className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 col-span-2 sm:col-span-1 ${
+              nextPrayer === "Jummah" ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md border-primary/20"
+            }`}
+          >
+            <Landmark className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${nextPrayer === "Jummah" ? "text-primary" : "text-accent"}`} />
+            <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">جمعہ</p>
+            <p className="font-heading font-semibold text-foreground text-xs mb-1">Jummah</p>
+            <p className={`font-body font-bold text-base sm:text-lg ${nextPrayer === "Jummah" ? "text-primary" : "text-foreground"}`}>
+              {JUMMAH_TIME}
+            </p>
+            {nextPrayer === "Jummah" && (
+              <p className="text-[10px] text-primary font-body font-medium mt-1 animate-pulse-glow">
+                Next • {getTimeUntil(JUMMAH_TIME)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <p className="text-center text-[10px] text-muted-foreground/50 mt-3 font-body">
-        جامع مسجد شریف بَرزُلہ سرینگر — Masjid Jama'at Schedule
+        جامع مسجد شریف بَرزَلّہ سرینگر — Masjid Jama'at Schedule
       </p>
     </section>
   );
