@@ -22,7 +22,6 @@ function getMasjidTimes() {
 
   return {
     Fajr: "5:55 AM",
-    Sunrise: "6:55 AM",
     Dhuhr: "1:15 PM",
     Asr: asrTime,
     Maghrib: "6:43 PM",
