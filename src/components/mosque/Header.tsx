@@ -4,7 +4,7 @@ import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import kalimaImg from "@/assets/kalima-calligraphy.png";
 
-const mapUrl = "https://www.google.com/maps?q=34.0522129,74.7997336";
+const mapUrl = "https://maps.app.goo.gl/LMtUJFA2gYn9aqV28?g_st=awb";
 
 const Header = () => {
   const { data } = usePrayerTimes();
