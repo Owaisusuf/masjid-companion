@@ -81,10 +81,10 @@ const QiblaFinder = () => {
               <Compass className="w-12 h-12 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground text-sm mb-2 font-body">
-              Find the direction of Kaaba from your location
+              Find the direction of the Holy Kaaba from your current location
             </p>
             <p className="text-muted-foreground text-sm mb-5 max-w-sm mx-auto font-urdu" dir="rtl">
-              اپنے مقام سے کعبہ شریف کی سمت معلوم کریں
+              اپنے موجودہ مقام سے خانہ کعبہ کی سمت معلوم کریں
             </p>
             <button
               onClick={findQibla}

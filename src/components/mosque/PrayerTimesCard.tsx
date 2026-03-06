@@ -3,6 +3,33 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { Clock, Moon, Sunrise, Sun, CloudSun, Sunset, Star, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+/**
+ * Fixed Masjid Prayer Schedule (Jama'at times)
+ * Zuhr: 1:15 PM all year
+ * Asr: 4:45 PM (Jan 1 – Mar 14), 4:50 PM (Mar 15+)
+ * Other times: Fixed as per masjid board
+ */
+function getMasjidTimes() {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-indexed
+  const day = now.getDate();
+
+  // Asr rule: before March 15 = 4:45 PM, March 15 onward = 4:50 PM
+  let asrTime = "4:45 PM";
+  if (month > 3 || (month === 3 && day >= 15)) {
+    asrTime = "4:50 PM";
+  }
+
+  return {
+    Fajr: "5:55 AM",
+    Sunrise: "6:55 AM",
+    Dhuhr: "1:15 PM",
+    Asr: asrTime,
+    Maghrib: "6:43 PM",
+    Isha: "8:10 PM",
+  };
+}
+
 const prayerNames = [
   { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
   { key: "Sunrise", label: "Sunrise", urdu: "طلوع آفتاب", Icon: Sunrise },
@@ -43,16 +70,16 @@ function getTimeUntil(time12: string): string {
 }
 
 const PrayerTimesCard = () => {
-  const { data, isLoading, isError } = usePrayerTimes();
+  const { data, isLoading } = usePrayerTimes();
+  const masjidTimes = getMasjidTimes();
   const [nextPrayer, setNextPrayer] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!data?.prayers) return;
-    const update = () => setNextPrayer(getNextPrayer(data.prayers as unknown as Record<string, string>));
+    const update = () => setNextPrayer(getNextPrayer(masjidTimes));
     update();
     const timer = setInterval(update, 60000);
     return () => clearInterval(timer);
-  }, [data]);
+  }, []);
 
   return (
     <section id="prayers" className="px-4 max-w-5xl mx-auto">
@@ -63,7 +90,7 @@ const PrayerTimesCard = () => {
       </div>
 
       {/* Date display */}
-      {data?.gregorian && data?.hijri && (
+      {data?.gregorian && data?.hijri ? (
         <div className="glass-card p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
@@ -78,18 +105,17 @@ const PrayerTimesCard = () => {
             <span className="font-arabic text-accent text-sm">— {data.hijri.monthAr}</span>
           </div>
         </div>
-      )}
-
-      {isLoading && !data && (
+      ) : isLoading ? (
         <div className="glass-card p-4 mb-4">
           <Skeleton className="h-6 w-64 mx-auto" />
         </div>
-      )}
+      ) : null}
 
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;
+          const time = masjidTimes[p.key as keyof typeof masjidTimes];
           return (
             <div
               key={p.key}
@@ -100,21 +126,13 @@ const PrayerTimesCard = () => {
               <IconComp className={`w-6 h-6 mx-auto mb-2 ${isNext ? "text-primary" : "text-accent"}`} />
               <p className="font-urdu text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
               <p className="font-heading font-semibold text-foreground text-xs mb-1.5">{p.label}</p>
-              {isLoading ? (
-                <Skeleton className="h-7 w-16 mx-auto" />
-              ) : isError ? (
-                <p className="text-destructive text-[10px]">Error</p>
-              ) : (
-                <>
-                  <p className={`font-body font-bold text-base sm:text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
-                    {data?.prayers[p.key as keyof typeof data.prayers]}
-                  </p>
-                  {isNext && data?.prayers && (
-                    <p className="text-[10px] text-primary font-body font-medium mt-1 animate-pulse-glow">
-                      Next • {getTimeUntil(data.prayers[p.key as keyof typeof data.prayers])}
-                    </p>
-                  )}
-                </>
+              <p className={`font-body font-bold text-base sm:text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
+                {time}
+              </p>
+              {isNext && (
+                <p className="text-[10px] text-primary font-body font-medium mt-1 animate-pulse-glow">
+                  Next • {getTimeUntil(time)}
+                </p>
               )}
             </div>
           );
@@ -122,7 +140,7 @@ const PrayerTimesCard = () => {
       </div>
 
       <p className="text-center text-[10px] text-muted-foreground/50 mt-3 font-body">
-        Shafi method • Fajr 18° • Isha 18° • Auto-updated daily
+        جامع مسجد شریف بَرزُلہ سرینگر — Masjid Jama'at Schedule
       </p>
     </section>
   );
