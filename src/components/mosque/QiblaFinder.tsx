@@ -71,14 +71,33 @@ const QiblaFinder = () => {
 
   useEffect(() => {
     const handler = (e: DeviceOrientationEvent) => {
-      if (e.alpha !== null) {
+      // Use webkitCompassHeading on iOS, fall back to alpha
+      const heading = (e as any).webkitCompassHeading ?? e.alpha;
+      if (heading !== null && heading !== undefined) {
         setHasCompass(true);
-        setCompassHeading(e.alpha);
+        // webkitCompassHeading is already compass heading (0=N), alpha needs inversion
+        setCompassHeading((e as any).webkitCompassHeading != null ? heading : (360 - heading) % 360);
       }
     };
+
+    const requestPermission = async () => {
+      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+        try {
+          const perm = await (DeviceOrientationEvent as any).requestPermission();
+          if (perm === "granted") {
+            window.addEventListener("deviceorientation", handler, true);
+          }
+        } catch {
+          // permission denied
+        }
+      } else {
+        window.addEventListener("deviceorientation", handler, true);
+      }
+    };
+
     if (typeof window !== "undefined" && "DeviceOrientationEvent" in window) {
-      window.addEventListener("deviceorientation", handler);
-      return () => window.removeEventListener("deviceorientation", handler);
+      requestPermission();
+      return () => window.removeEventListener("deviceorientation", handler, true);
     }
   }, []);
 
