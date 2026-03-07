@@ -225,11 +225,12 @@ const HadithCollection = () => {
       const eng = allEngData[i];
       if (eng?.text?.toLowerCase().includes(q)) {
         const arb = allArbData[i];
+        const urd = allUrdData[i];
         let narrator = "";
         let text = eng.text || "";
         const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
         if (match) { narrator = match[1]; text = text.slice(match[0].length); }
-        results.push({ hadithNumber: eng.hadithnumber || (i + 1), englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${eng.hadithnumber || (i + 1)}`, inBookReference: "" });
+        results.push({ hadithNumber: eng.hadithnumber || (i + 1), englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", hadithUrdu: urd?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${eng.hadithnumber || (i + 1)}`, inBookReference: "" });
       }
     }
     if (!results.length) { setError(`No results for "${searchQuery}"`); return; }
