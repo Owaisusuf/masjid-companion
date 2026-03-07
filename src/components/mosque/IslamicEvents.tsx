@@ -1,20 +1,14 @@
-import { Calendar, BookOpen } from "lucide-react";
-import { getEventsForDay, getEventsForMonth, IslamicEvent } from "@/data/islamic-events";
+import { Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { getEventsForDay } from "@/data/islamic-events";
 import { getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
 
 const IslamicEvents = () => {
-  // Current Islamic month context — during Ramadan 2026
+  const navigate = useNavigate();
   const ramadanActive = isRamadan();
   const todayRamadan = getTodayRamadan();
-
-  // Get today's events and all month events
-  const currentIslamicMonth = 9; // Ramadan
-  const currentDay = todayRamadan?.day || 17; // fallback to 17
-
-  const todayEvents = getEventsForDay(currentDay, currentIslamicMonth);
-  const monthEvents = getEventsForMonth(currentIslamicMonth);
-
-  if (!ramadanActive && monthEvents.length === 0) return null;
+  const currentDay = todayRamadan?.day || 17;
+  const todayEvents = getEventsForDay(currentDay, 9);
 
   return (
     <section id="islamic-events" className="px-4 max-w-5xl mx-auto">
@@ -24,54 +18,36 @@ const IslamicEvents = () => {
         <span className="font-urdu text-sm text-muted-foreground">اسلامی تاریخ</span>
       </div>
 
-      {/* Today's events highlight */}
-      {todayEvents.length > 0 && (
-        <div className="glass-card glow-primary p-4 sm:p-6 mb-4">
-          <p className="text-xs text-primary font-body font-semibold uppercase tracking-wider mb-3">
-            📌 Today — {currentDay} Ramadan 1447 AH
-          </p>
-          {todayEvents.map((event, i) => (
-            <EventCard key={i} event={event} highlight />
-          ))}
-        </div>
-      )}
+      <div className="glass-card p-5 sm:p-6">
+        {/* Today's highlight */}
+        {ramadanActive && todayEvents.length > 0 && (
+          <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/30">
+            <p className="text-xs text-primary font-body font-semibold uppercase tracking-wider mb-2">
+              📌 Today — {currentDay} Ramadan
+            </p>
+            {todayEvents.map((event, i) => (
+              <div key={i}>
+                <p className="font-body text-sm font-semibold text-foreground">{event.title}</p>
+                <p className="font-urdu text-sm text-accent" dir="rtl">{event.titleUrdu}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
-      {/* All month events */}
-      <div className="glass-card p-4 sm:p-6">
-        <p className="text-xs text-muted-foreground font-body font-semibold uppercase tracking-wider mb-3">
-          <BookOpen className="w-3.5 h-3.5 inline mr-1.5" />
-          Important Events of Ramadan
+        <p className="text-sm text-muted-foreground font-body mb-4 text-center">
+          Explore important events from Islamic history throughout the year
         </p>
-        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-          {monthEvents.map((event, i) => (
-            <EventCard key={i} event={event} highlight={event.day === currentDay} />
-          ))}
+        <div className="text-center">
+          <button
+            onClick={() => navigate("/islamic-events")}
+            className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-body text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            View All Events →
+          </button>
         </div>
       </div>
     </section>
   );
 };
-
-const EventCard = ({ event, highlight }: { event: IslamicEvent; highlight?: boolean }) => (
-  <div className={`p-3 sm:p-4 rounded-xl border transition-colors ${
-    highlight 
-      ? "bg-primary/5 border-primary/30" 
-      : "bg-secondary/40 border-border/50 hover:bg-secondary/60"
-  }`}>
-    <div className="flex items-start gap-3">
-      <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 font-body ${
-        highlight ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
-      }`}>
-        {event.day}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="font-body text-sm font-semibold text-foreground">{event.title}</p>
-        <p className="font-urdu text-sm text-accent" dir="rtl">{event.titleUrdu}</p>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed font-body">{event.description}</p>
-        <p className="text-[10px] text-primary/60 mt-1 font-body italic">📖 {event.source}</p>
-      </div>
-    </div>
-  </div>
-);
 
 export default IslamicEvents;
