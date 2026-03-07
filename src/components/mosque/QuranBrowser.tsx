@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked } from "lucide-react";
+import { juzSurahMap } from "@/data/juz-surah-map";
 
 interface Surah {
   number: number;
