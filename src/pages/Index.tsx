@@ -12,6 +12,8 @@ import TasbihCounter from "@/components/mosque/TasbihCounter";
 import DailyHadith from "@/components/mosque/DailyHadith";
 import Footer from "@/components/mosque/Footer";
 import PrayerAlarm from "@/components/mosque/PrayerAlarm";
+import IslamicEvents from "@/components/mosque/IslamicEvents";
+import NamazGuide from "@/components/mosque/NamazGuide";
 
 const SectionDivider = () => (
   <div className="flex items-center justify-center py-3">
