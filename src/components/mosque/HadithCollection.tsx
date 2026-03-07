@@ -264,7 +264,7 @@ const HadithCollection = () => {
 
   const resetHome = () => {
     setView("home"); setSelectedCollection(null); setSelectedBook(null);
-    setBooks([]); setHadiths([]); setAllEngData([]); setAllArbData([]);
+    setBooks([]); setHadiths([]); setAllEngData([]); setAllArbData([]); setAllUrdData([]);
     setError(""); setSearchQuery(""); setPage(0);
   };
 
