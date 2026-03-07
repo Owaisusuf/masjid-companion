@@ -67,6 +67,7 @@ const HadithCollection = () => {
   const [hadiths, setHadiths] = useState<HadithItem[]>([]);
   const [allEngData, setAllEngData] = useState<any[]>([]);
   const [allArbData, setAllArbData] = useState<any[]>([]);
+  const [allUrdData, setAllUrdData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
