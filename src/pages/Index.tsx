@@ -31,7 +31,11 @@ const Index = () => {
         <SectionDivider />
         <RamadanSchedule />
         <SectionDivider />
+        <IslamicEvents />
+        <SectionDivider />
         <DailyHadith />
+        <SectionDivider />
+        <NamazGuide />
         <SectionDivider />
         <QuranBrowser />
         <SectionDivider />
