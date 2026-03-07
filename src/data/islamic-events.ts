@@ -30,9 +30,6 @@ export const islamicEvents: IslamicEvent[] = [
   // Rajab
   { day: 27, month: "Rajab", monthNumber: 7, title: "Isra and Mi'raj", titleUrdu: "شبِ معراج", description: "The miraculous Night Journey from Makkah to Jerusalem and the Ascension to the heavens. On this blessed night, the five daily prayers were prescribed for the Muslim Ummah.", source: "" },
 
-  // Shaban
-  { day: 15, month: "Shaban", monthNumber: 8, title: "Shab-e-Baraat", titleUrdu: "شبِ برات", description: "A night of forgiveness and mercy. The Prophet ﷺ mentioned that Allah looks at His creation on the middle night of Shaban and forgives all except those who associate partners with Him or harbor hatred.", source: "" },
-
   // Shawwal
   { day: 1, month: "Shawwal", monthNumber: 10, title: "Eid ul-Fitr", titleUrdu: "عید الفطر", description: "The festival of breaking the fast, celebrated after completing the month of Ramadan. It is a day of gratitude, joy, and community gathering.", source: "" },
 
