@@ -177,6 +177,7 @@ const HadithCollection = () => {
       const hNum = eng?.hadithnumber || (i + 1);
       if (hNum >= book.hadithFrom && hNum <= book.hadithTo) {
         const arb = allArbData[i];
+        const urd = allUrdData[i];
         let narrator = "";
         let text = eng?.text || "";
         const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
@@ -186,6 +187,7 @@ const HadithCollection = () => {
           englishNarrator: narrator,
           hadithEnglish: text,
           hadithArabic: arb?.text || "",
+          hadithUrdu: urd?.text || "",
           bookNumber: String(book.number),
           reference: `${selectedCollection?.name} ${hNum}`,
           inBookReference: `Book ${book.number}, Hadith ${hNum - book.hadithFrom + 1}`,
