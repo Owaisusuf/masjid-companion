@@ -347,7 +347,7 @@ const HadithCollection = () => {
             </div>
 
             <p className="text-center text-muted-foreground/50 text-[10px] font-body mt-6">
-              Languages: English • Arabic &nbsp;|&nbsp; Source: hadith-api
+              Languages: English • Arabic • Urdu &nbsp;|&nbsp; Source: hadith-api
             </p>
           </div>
         </div>
