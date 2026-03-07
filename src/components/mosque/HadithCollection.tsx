@@ -258,7 +258,7 @@ const HadithCollection = () => {
 
   const goBack = () => {
     if (view === "hadiths") { setView("books"); setHadiths([]); setSelectedBook(null); setPage(0); }
-    else if (view === "books") { setView("home"); setSelectedCollection(null); setBooks([]); setAllEngData([]); setAllArbData([]); }
+    else if (view === "books") { setView("home"); setSelectedCollection(null); setBooks([]); setAllEngData([]); setAllArbData([]); setAllUrdData([]); }
     setError("");
   };
 
