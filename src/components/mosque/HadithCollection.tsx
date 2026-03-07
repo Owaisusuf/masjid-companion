@@ -484,7 +484,16 @@ const HadithCollection = () => {
                   </div>
                 )}
 
-                {/* Reference footer */}
+                {/* Urdu translation */}
+                {h.hadithUrdu && (
+                  <div className="px-4 sm:px-5 py-4 sm:py-5 bg-accent/[0.04] border-t border-border/10">
+                    <p className="font-urdu text-sm sm:text-base leading-[2.6] text-foreground/85 text-right" dir="rtl">
+                      {h.hadithUrdu}
+                    </p>
+                  </div>
+                )}
+
+
                 <div className="px-4 sm:px-5 py-2.5 bg-secondary/20 border-t border-border/20 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
                     <p><span className="font-medium text-foreground/70">Reference</span> : <span className="text-primary">{h.reference}</span></p>
