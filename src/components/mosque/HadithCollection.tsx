@@ -123,6 +123,7 @@ const HadithCollection = () => {
 
       setAllEngData(engItems);
       setAllArbData(arbItems);
+      setAllUrdData(urdItems);
 
       // Build book sections from reference.book
       const bookMap = new Map<string, { items: number[]; min: number; max: number }>();
