@@ -56,22 +56,30 @@ const Header = () => {
         </a>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-1">
-          {data?.hijri &&
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-              <span className="font-arabic text-sm text-amber-300">{data.hijri.monthAr}</span>
-              <span className="text-white font-heading font-semibold text-xs">
-                {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
-              </span>
-            </div>
-          }
-
-          {ramadanActive && todayRamadan &&
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
-              <span className="text-amber-300 font-heading font-semibold text-xs">
-                ☪ Ramadan Mubarak — Day {todayRamadan.day}
-              </span>
-            </div>
-          }
+          {ramadanActive && todayRamadan ? (
+            <>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                <span className="font-arabic text-sm text-amber-300">رمضان</span>
+                <span className="text-white font-heading font-semibold text-xs">
+                  {todayRamadan.day} Ramadan 1447 AH
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
+                <span className="text-amber-300 font-heading font-semibold text-xs">
+                  ☪ Ramadan Mubarak — Day {todayRamadan.day}
+                </span>
+              </div>
+            </>
+          ) : (
+            data?.hijri && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                <span className="font-arabic text-sm text-amber-300">{data.hijri.monthAr}</span>
+                <span className="text-white font-heading font-semibold text-xs">
+                  {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
+                </span>
+              </div>
+            )
+          )}
         </div>
       </div>
     </header>);

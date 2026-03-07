@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked } from "lucide-react";
+import { juzSurahMap } from "@/data/juz-surah-map";
 
 interface Surah {
   number: number;
@@ -26,7 +27,7 @@ const ENGLISH_EDITIONS = [
   { key: "en.pickthall", label: "Pickthall" },
 ];
 
-const juzData = Array.from({ length: 30 }, (_, i) => ({ number: i + 1 }));
+
 
 const QuranBrowser = () => {
   const [surahs, setSurahs] = useState<Surah[]>([]);
@@ -222,17 +223,24 @@ const QuranBrowser = () => {
               )}
             </>
           ) : (
-            <div className="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-10 gap-2 max-h-[420px] overflow-y-auto pr-1">
-              {juzData.map((j) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto pr-1">
+              {juzSurahMap.map((j) => (
                 <button
                   key={j.number}
                   onClick={() => loadJuz(j.number)}
-                  className="p-3 rounded-xl bg-secondary/50 hover:bg-accent/10 border border-border/50 hover:border-accent/30 transition-all duration-200 text-center group"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 hover:bg-accent/10 border border-border/50 hover:border-accent/30 transition-all duration-200 text-left group"
                 >
-                  <p className="font-heading text-lg sm:text-xl font-bold text-accent group-hover:scale-110 transition-transform">
+                  <span className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-xs font-bold font-body shrink-0">
                     {j.number}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-body">Parah</p>
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm font-semibold text-foreground truncate">{j.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {j.surahs.slice(0, 2).join(", ")}{j.surahs.length > 2 ? ` +${j.surahs.length - 2} more` : ""}
+                    </p>
+                  </div>
+                  <span className="font-arabic text-base text-accent shrink-0">{j.nameArabic}</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0 hidden sm:block" />
                 </button>
               ))}
             </div>
