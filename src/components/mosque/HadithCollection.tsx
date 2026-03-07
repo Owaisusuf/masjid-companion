@@ -98,13 +98,15 @@ const HadithCollection = () => {
     setLoading(true);
     setError("");
     try {
-      const [engRes, arbRes] = await Promise.all([
+      const [engRes, arbRes, urdRes] = await Promise.all([
         fetch(`${API_BASE}/editions/eng-${col.key}.min.json`),
         fetch(`${API_BASE}/editions/ara-${col.key}.min.json`),
+        fetch(`${API_BASE}/editions/urd-${col.key}.min.json`).catch(() => null),
       ]);
 
       let engItems: any[] = [];
       let arbItems: any[] = [];
+      let urdItems: any[] = [];
 
       if (engRes.ok) {
         const json = await engRes.json();
@@ -113,6 +115,10 @@ const HadithCollection = () => {
       if (arbRes.ok) {
         const json = await arbRes.json();
         arbItems = json?.hadiths || [];
+      }
+      if (urdRes && urdRes.ok) {
+        const json = await urdRes.json();
+        urdItems = json?.hadiths || [];
       }
 
       setAllEngData(engItems);
