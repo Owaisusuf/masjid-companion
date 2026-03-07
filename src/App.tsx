@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import NamazGuidePage from "./pages/NamazGuidePage";
 import IslamicEventsPage from "./pages/IslamicEventsPage";
+import HadithCollectionPage from "./pages/HadithCollectionPage";
+import QuranPage from "./pages/QuranPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
