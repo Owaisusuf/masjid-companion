@@ -67,6 +67,7 @@ const HadithCollection = () => {
   const [hadiths, setHadiths] = useState<HadithItem[]>([]);
   const [allEngData, setAllEngData] = useState<any[]>([]);
   const [allArbData, setAllArbData] = useState<any[]>([]);
+  const [allUrdData, setAllUrdData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,13 +98,15 @@ const HadithCollection = () => {
     setLoading(true);
     setError("");
     try {
-      const [engRes, arbRes] = await Promise.all([
+      const [engRes, arbRes, urdRes] = await Promise.all([
         fetch(`${API_BASE}/editions/eng-${col.key}.min.json`),
         fetch(`${API_BASE}/editions/ara-${col.key}.min.json`),
+        fetch(`${API_BASE}/editions/urd-${col.key}.min.json`).catch(() => null),
       ]);
 
       let engItems: any[] = [];
       let arbItems: any[] = [];
+      let urdItems: any[] = [];
 
       if (engRes.ok) {
         const json = await engRes.json();
@@ -113,9 +116,14 @@ const HadithCollection = () => {
         const json = await arbRes.json();
         arbItems = json?.hadiths || [];
       }
+      if (urdRes && urdRes.ok) {
+        const json = await urdRes.json();
+        urdItems = json?.hadiths || [];
+      }
 
       setAllEngData(engItems);
       setAllArbData(arbItems);
+      setAllUrdData(urdItems);
 
       // Build book sections from reference.book
       const bookMap = new Map<string, { items: number[]; min: number; max: number }>();
@@ -169,6 +177,7 @@ const HadithCollection = () => {
       const hNum = eng?.hadithnumber || (i + 1);
       if (hNum >= book.hadithFrom && hNum <= book.hadithTo) {
         const arb = allArbData[i];
+        const urd = allUrdData[i];
         let narrator = "";
         let text = eng?.text || "";
         const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
@@ -178,6 +187,7 @@ const HadithCollection = () => {
           englishNarrator: narrator,
           hadithEnglish: text,
           hadithArabic: arb?.text || "",
+          hadithUrdu: urd?.text || "",
           bookNumber: String(book.number),
           reference: `${selectedCollection?.name} ${hNum}`,
           inBookReference: `Book ${book.number}, Hadith ${hNum - book.hadithFrom + 1}`,
@@ -196,11 +206,12 @@ const HadithCollection = () => {
       if (eng) {
         const idx = allEngData.indexOf(eng);
         const arb = allArbData[idx];
+        const urd = allUrdData[idx];
         let narrator = "";
         let text = eng.text || "";
         const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
         if (match) { narrator = match[1]; text = text.slice(match[0].length); }
-        setHadiths([{ hadithNumber: num, englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${num}`, inBookReference: "" }]);
+        setHadiths([{ hadithNumber: num, englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", hadithUrdu: urd?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${num}`, inBookReference: "" }]);
         setSelectedBook({ number: 0, name: `Hadith #${num}`, nameArabic: "", hadithFrom: num, hadithTo: num, count: 1 });
         setView("hadiths");
         setPage(0);
@@ -214,11 +225,12 @@ const HadithCollection = () => {
       const eng = allEngData[i];
       if (eng?.text?.toLowerCase().includes(q)) {
         const arb = allArbData[i];
+        const urd = allUrdData[i];
         let narrator = "";
         let text = eng.text || "";
         const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
         if (match) { narrator = match[1]; text = text.slice(match[0].length); }
-        results.push({ hadithNumber: eng.hadithnumber || (i + 1), englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${eng.hadithnumber || (i + 1)}`, inBookReference: "" });
+        results.push({ hadithNumber: eng.hadithnumber || (i + 1), englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", hadithUrdu: urd?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${eng.hadithnumber || (i + 1)}`, inBookReference: "" });
       }
     }
     if (!results.length) { setError(`No results for "${searchQuery}"`); return; }
@@ -246,13 +258,13 @@ const HadithCollection = () => {
 
   const goBack = () => {
     if (view === "hadiths") { setView("books"); setHadiths([]); setSelectedBook(null); setPage(0); }
-    else if (view === "books") { setView("home"); setSelectedCollection(null); setBooks([]); setAllEngData([]); setAllArbData([]); }
+    else if (view === "books") { setView("home"); setSelectedCollection(null); setBooks([]); setAllEngData([]); setAllArbData([]); setAllUrdData([]); }
     setError("");
   };
 
   const resetHome = () => {
     setView("home"); setSelectedCollection(null); setSelectedBook(null);
-    setBooks([]); setHadiths([]); setAllEngData([]); setAllArbData([]);
+    setBooks([]); setHadiths([]); setAllEngData([]); setAllArbData([]); setAllUrdData([]);
     setError(""); setSearchQuery(""); setPage(0);
   };
 
@@ -335,7 +347,7 @@ const HadithCollection = () => {
             </div>
 
             <p className="text-center text-muted-foreground/50 text-[10px] font-body mt-6">
-              Languages: English • Arabic &nbsp;|&nbsp; Source: hadith-api
+              Languages: English • Arabic • Urdu &nbsp;|&nbsp; Source: hadith-api
             </p>
           </div>
         </div>
@@ -472,7 +484,16 @@ const HadithCollection = () => {
                   </div>
                 )}
 
-                {/* Reference footer */}
+                {/* Urdu translation */}
+                {h.hadithUrdu && (
+                  <div className="px-4 sm:px-5 py-4 sm:py-5 bg-accent/[0.04] border-t border-border/10">
+                    <p className="font-urdu text-sm sm:text-base leading-[2.6] text-foreground/85 text-right" dir="rtl">
+                      {h.hadithUrdu}
+                    </p>
+                  </div>
+                )}
+
+
                 <div className="px-4 sm:px-5 py-2.5 bg-secondary/20 border-t border-border/20 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-[10px] text-muted-foreground font-body space-y-0.5">
                     <p><span className="font-medium text-foreground/70">Reference</span> : <span className="text-primary">{h.reference}</span></p>
