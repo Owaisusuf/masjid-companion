@@ -206,11 +206,12 @@ const HadithCollection = () => {
       if (eng) {
         const idx = allEngData.indexOf(eng);
         const arb = allArbData[idx];
+        const urd = allUrdData[idx];
         let narrator = "";
         let text = eng.text || "";
         const match = text.match(/^(Narrated\s+[^:]+):\s*/i);
         if (match) { narrator = match[1]; text = text.slice(match[0].length); }
-        setHadiths([{ hadithNumber: num, englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${num}`, inBookReference: "" }]);
+        setHadiths([{ hadithNumber: num, englishNarrator: narrator, hadithEnglish: text, hadithArabic: arb?.text || "", hadithUrdu: urd?.text || "", bookNumber: "", reference: `${selectedCollection?.name} ${num}`, inBookReference: "" }]);
         setSelectedBook({ number: 0, name: `Hadith #${num}`, nameArabic: "", hadithFrom: num, hadithTo: num, count: 1 });
         setView("hadiths");
         setPage(0);
