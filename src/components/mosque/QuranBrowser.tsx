@@ -27,7 +27,7 @@ const ENGLISH_EDITIONS = [
   { key: "en.pickthall", label: "Pickthall" },
 ];
 
-const juzData = Array.from({ length: 30 }, (_, i) => ({ number: i + 1 }));
+
 
 const QuranBrowser = () => {
   const [surahs, setSurahs] = useState<Surah[]>([]);
