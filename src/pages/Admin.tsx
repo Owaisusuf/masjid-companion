@@ -22,6 +22,7 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [config, setConfig] = useState<PrayerConfig>(loadPrayerConfig());
+  const [hijriAdjustment, setHijriAdjustment] = useState<number>(loadHijriAdjustment());
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activeTab, setActiveTab] = useState<"prayer" | "announcements">("prayer");
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -30,6 +31,16 @@ const Admin = () => {
   useEffect(() => {
     const session = sessionStorage.getItem("admin-auth");
     if (session === "true") setAuthenticated(true);
+  }, []);
+
+  useEffect(() => {
+    const sync = () => setHijriAdjustment(loadHijriAdjustment());
+    window.addEventListener("storage", sync);
+    window.addEventListener("masjid-hijri-adjustment-changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("masjid-hijri-adjustment-changed", sync);
+    };
   }, []);
 
   useEffect(() => {
