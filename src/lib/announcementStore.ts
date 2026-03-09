@@ -1,5 +1,7 @@
 import eventImage from "@/assets/event-deeni-ijtema.jpg";
 import { getMasjidISODate } from "@/lib/localDate";
+import { emitSameTabStorageEvents, safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/safeStorage";
+import { broadcastSync } from "@/lib/syncBus";
 
 export interface Announcement {
   id: string;
@@ -13,6 +15,7 @@ export interface Announcement {
 }
 
 const STORAGE_KEY = "masjid-announcements";
+const CHANGE_EVENT = "masjid-announcements-changed";
 
 const DEFAULT_ANNOUNCEMENT: Announcement = {
   id: "deeni-ijtema-2026",
@@ -25,19 +28,24 @@ const DEFAULT_ANNOUNCEMENT: Announcement = {
   active: true,
 };
 
+function persistAnnouncements(value: Announcement[]): boolean {
+  try {
+    return safeSetItem(STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    return false;
+  }
+}
+
 export function loadAnnouncements(): Announcement[] {
   let parsed: unknown = null;
-  let storageOk = true;
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = safeGetItem(STORAGE_KEY);
     if (raw !== null) parsed = JSON.parse(raw);
   } catch {
-    storageOk = false;
+    // If parsing/storage is blocked, don't auto-seed defaults (prevents reappearing after delete).
+    return [];
   }
-
-  // If storage is blocked/unavailable, don't auto-seed defaults (prevents "reappearing" after delete).
-  if (!storageOk) return [];
 
   // If storage exists and is an array (even empty), treat it as the source of truth.
   // This prevents deleted announcements from being re-seeded automatically.
@@ -45,25 +53,20 @@ export function loadAnnouncements(): Announcement[] {
   if (Array.isArray(parsed)) {
     announcements = parsed as Announcement[];
   } else {
-    announcements = [DEFAULT_ANNOUNCEMENT];
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(announcements));
-    } catch {
-      /* ignore */
-    }
+    // Seed defaults only if we can actually write (Safari private mode can read but cannot write).
+    const seeded = [DEFAULT_ANNOUNCEMENT];
+    const ok = persistAnnouncements(seeded);
+    if (!ok) return [];
+    announcements = seeded;
   }
 
   // Auto-cleanup expired announcements (runs even if popup isn't opened)
   const today = getMasjidISODate();
   const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
   if (cleaned.length !== announcements.length) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new Event("masjid-announcements-changed"));
-    } catch {
-      /* ignore */
-    }
+    persistAnnouncements(cleaned);
+    emitSameTabStorageEvents(CHANGE_EVENT);
+    broadcastSync("announcements");
     return cleaned;
   }
 
@@ -71,23 +74,15 @@ export function loadAnnouncements(): Announcement[] {
 }
 
 export function saveAnnouncements(announcements: Announcement[]): void {
-  const value = JSON.stringify(announcements);
+  const ok = persistAnnouncements(announcements);
 
-  try {
-    localStorage.setItem(STORAGE_KEY, value);
-  } catch {
-    // Common failure: QUOTA_EXCEEDED_ERR due to base64 images; clear then retry so deletes actually persist.
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.setItem(STORAGE_KEY, value);
-    } catch {
-      /* ignore */
-    }
+  // If write fails (e.g., storage blocked), removing prevents default re-seed on next load.
+  if (!ok) {
+    safeRemoveItem(STORAGE_KEY);
   }
 
-  // "storage" doesn't fire in the same tab on normal localStorage writes, so we dispatch our own.
-  window.dispatchEvent(new Event("storage"));
-  window.dispatchEvent(new Event("masjid-announcements-changed"));
+  emitSameTabStorageEvents(CHANGE_EVENT);
+  broadcastSync("announcements");
 }
 
 export function getActiveAnnouncements(): Announcement[] {

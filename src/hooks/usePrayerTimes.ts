@@ -71,10 +71,12 @@ function parseMasjidDateParts() {
 async function fetchPrayerTimes(hijriDayOffset: number) {
   const { yyyy, mm, dd } = parseMasjidDateParts();
 
-  // Prayer timings are computed for the masjid location; Hijri is computed locally (Intl) so we can reliably apply offset.
+  // Prayer timings are computed for the masjid location.
+  // We also pass `adjustment` to the API so Hijri offset works even on browsers
+  // that don't support Intl Islamic calendar (fallback path).
   const url =
     `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}` +
-    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0`;
+    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0&adjustment=${hijriDayOffset}`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch prayer times");

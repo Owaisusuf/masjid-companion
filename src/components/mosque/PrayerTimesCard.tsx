@@ -66,10 +66,16 @@ const PrayerTimesCard = () => {
       }
       setNextPrayer(getNextPrayer(allTimes));
     };
+
     update();
     const timer = setInterval(update, 30000);
     window.addEventListener("storage", update);
-    return () => { clearInterval(timer); window.removeEventListener("storage", update); };
+    window.addEventListener("masjid-prayer-config-changed", update);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("storage", update);
+      window.removeEventListener("masjid-prayer-config-changed", update);
+    };
   }, []);
 
   const showJummah = isJummahToday();
@@ -119,7 +125,9 @@ const PrayerTimesCard = () => {
       )}
 
       {/* Prayer cards grid */}
-      <div className={`grid grid-cols-2 sm:grid-cols-${showJummah ? '6' : '5'} gap-2 sm:gap-3`}>
+      <div
+        className={`grid grid-cols-2 gap-2 sm:gap-3 ${showJummah ? "sm:grid-cols-6" : "sm:grid-cols-5"}`}
+      >
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;
@@ -131,8 +139,12 @@ const PrayerTimesCard = () => {
                 isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md"
               } ${p.key === "Isha" && !showJummah ? "col-span-2 sm:col-span-1" : ""}`}
             >
-              <IconComp className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${isNext ? "text-primary" : "text-accent"}`} />
-              <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">{p.urdu}</p>
+              <IconComp
+                className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${isNext ? "text-primary" : "text-accent"}`}
+              />
+              <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">
+                {p.urdu}
+              </p>
               <p className="font-heading font-semibold text-foreground text-xs mb-1">{p.label}</p>
               <p className={`font-body font-bold text-base sm:text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
                 {time}
@@ -150,13 +162,23 @@ const PrayerTimesCard = () => {
         {showJummah && (
           <div
             className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 col-span-2 sm:col-span-1 ${
-              nextPrayer === "Jummah" ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md border-primary/20"
+              nextPrayer === "Jummah"
+                ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]"
+                : "hover:shadow-md border-primary/20"
             }`}
           >
-            <Landmark className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${nextPrayer === "Jummah" ? "text-primary" : "text-accent"}`} />
-            <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">جمعہ</p>
+            <Landmark
+              className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${nextPrayer === "Jummah" ? "text-primary" : "text-accent"}`}
+            />
+            <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">
+              جمعہ
+            </p>
             <p className="font-heading font-semibold text-foreground text-xs mb-1">Jummah</p>
-            <p className={`font-body font-bold text-base sm:text-lg ${nextPrayer === "Jummah" ? "text-primary" : "text-foreground"}`}>
+            <p
+              className={`font-body font-bold text-base sm:text-lg ${
+                nextPrayer === "Jummah" ? "text-primary" : "text-foreground"
+              }`}
+            >
               {JUMMAH_TIME}
             </p>
             {nextPrayer === "Jummah" && (
@@ -176,3 +198,4 @@ const PrayerTimesCard = () => {
 };
 
 export default PrayerTimesCard;
+

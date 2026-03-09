@@ -1,13 +1,41 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Lock, Save, ArrowLeft, Settings, Clock, Megaphone, Plus, Trash2, Image, ToggleLeft, ToggleRight, Calendar, X } from "lucide-react";
-import { loadPrayerConfig, savePrayerConfig, getDefaultAutoTimes, type PrayerConfig } from "@/lib/prayerStore";
-import { loadAnnouncements, saveAnnouncements, getDefaultAnnouncement, type Announcement } from "@/lib/announcementStore";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Image,
+  Lock,
+  Megaphone,
+  Plus,
+  Save,
+  Settings,
+  Shield,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import {
+  getDefaultAutoTimes,
+  loadPrayerConfig,
+  savePrayerConfig,
+  type PrayerConfig,
+} from "@/lib/prayerStore";
+import {
+  getDefaultAnnouncement,
+  loadAnnouncements,
+  saveAnnouncements,
+  type Announcement,
+} from "@/lib/announcementStore";
 import { loadHijriAdjustment, saveHijriAdjustment } from "@/lib/hijriAdjustmentStore";
+import { getMasjidISODate } from "@/lib/localDate";
 import { toast } from "@/hooks/use-toast";
 
-
 const ADMIN_PASSWORD = "jamia@masjid";
+
+type Tab = "prayer" | "announcements";
 
 const prayerLabels = [
   { key: "Fajr", label: "Fajr", urdu: "فجر" },
@@ -17,20 +45,36 @@ const prayerLabels = [
   { key: "Isha", label: "Isha", urdu: "عشاء" },
 ] as const;
 
-const Admin = () => {
+export default function Admin() {
+  const navigate = useNavigate();
+
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [config, setConfig] = useState<PrayerConfig>(loadPrayerConfig());
-  const [hijriAdjustment, setHijriAdjustment] = useState<number>(loadHijriAdjustment());
+
+  // `config.times` ALWAYS stores the manual schedule; auto schedule is derived.
+  const [config, setConfig] = useState<PrayerConfig>(() => loadPrayerConfig());
+  const [hijriAdjustment, setHijriAdjustment] = useState<number>(() => loadHijriAdjustment());
+
+  const [activeTab, setActiveTab] = useState<Tab>("prayer");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [activeTab, setActiveTab] = useState<"prayer" | "announcements">("prayer");
+
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const navigate = useNavigate();
 
   useEffect(() => {
     const session = sessionStorage.getItem("admin-auth");
     if (session === "true") setAuthenticated(true);
+  }, []);
+
+  // Sync prayer config in same tab (custom event) + other tabs (storage / broadcast reload).
+  useEffect(() => {
+    const sync = () => setConfig(loadPrayerConfig());
+    window.addEventListener("storage", sync);
+    window.addEventListener("masjid-prayer-config-changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("masjid-prayer-config-changed", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -44,9 +88,7 @@ const Admin = () => {
   }, []);
 
   useEffect(() => {
-    if (authenticated) {
-      setAnnouncements(loadAnnouncements());
-    }
+    if (authenticated) setAnnouncements(loadAnnouncements());
   }, [authenticated]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -60,33 +102,31 @@ const Admin = () => {
     }
   };
 
-  // Prayer handlers
-  const handleModeChange = (mode: "auto" | "manual") => {
-    setConfig({ mode, times: mode === "auto" ? getDefaultAutoTimes() : config.times });
+  const handleModeChange = (mode: PrayerConfig["mode"]) => {
+    setConfig((prev) => ({ ...prev, mode }));
   };
 
   const handleTimeChange = (key: string, value: string) => {
-    setConfig(prev => ({ ...prev, times: { ...prev.times, [key]: value } }));
+    setConfig((prev) => ({ ...prev, times: { ...prev.times, [key]: value } }));
   };
 
   const handleSavePrayer = () => {
     savePrayerConfig(config);
-    toast({ title: "Saved", description: "Prayer times updated." });
+    toast({ title: "Saved", description: "Prayer settings updated." });
   };
 
-  // Announcement handlers
   const addAnnouncement = () => {
-    setAnnouncements(prev => [...prev, getDefaultAnnouncement()]);
+    setAnnouncements((prev) => [...prev, getDefaultAnnouncement()]);
   };
 
   const updateAnnouncement = (id: string, field: keyof Announcement, value: string | boolean) => {
-    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, [field]: value } : a)));
   };
 
   const deleteAnnouncement = (id: string) => {
-    const updated = announcements.filter(a => a.id !== id);
+    const updated = announcements.filter((a) => a.id !== id);
     setAnnouncements(updated);
-    saveAnnouncements(updated); // Persist deletion immediately
+    saveAnnouncements(updated);
     toast({ title: "Deleted", description: "Announcement removed." });
   };
 
@@ -105,7 +145,7 @@ const Admin = () => {
 
   const handleSaveAnnouncements = () => {
     saveAnnouncements(announcements);
-    toast({ title: "Saved", description: "Announcements updated. Active alerts will show on the website." });
+    toast({ title: "Saved", description: "Announcements updated." });
   };
 
   if (!authenticated) {
@@ -124,18 +164,27 @@ const Admin = () => {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setPasswordError(""); }}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setPasswordError("");
+                  }}
                   placeholder="Password"
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground text-sm font-body placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   autoFocus
                 />
               </div>
               {passwordError && <p className="text-destructive text-xs font-body">{passwordError}</p>}
-              <button type="submit" className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity">
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity"
+              >
                 Login
               </button>
             </form>
-            <button onClick={() => navigate("/")} className="mt-4 text-xs text-muted-foreground hover:text-primary transition-colors font-body">
+            <button
+              onClick={() => navigate("/")}
+              className="mt-4 text-xs text-muted-foreground hover:text-primary transition-colors font-body"
+            >
               ← Back to website
             </button>
           </div>
@@ -144,12 +193,17 @@ const Admin = () => {
     );
   }
 
+  const autoTimes = getDefaultAutoTimes();
+
   return (
     <div className="min-h-screen bg-background px-4 py-6 sm:py-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigate("/")} className="flex items-center gap-1.5 text-primary hover:text-accent transition-colors text-sm font-body font-medium">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1.5 text-primary hover:text-accent transition-colors text-sm font-body font-medium"
+          >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <div className="flex items-center gap-2">
@@ -163,7 +217,9 @@ const Admin = () => {
           <button
             onClick={() => setActiveTab("prayer")}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-body font-medium transition-all ${
-              activeTab === "prayer" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              activeTab === "prayer"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Clock className="w-4 h-4" /> Prayer Times
@@ -171,14 +227,15 @@ const Admin = () => {
           <button
             onClick={() => setActiveTab("announcements")}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-body font-medium transition-all ${
-              activeTab === "announcements" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              activeTab === "announcements"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Megaphone className="w-4 h-4" /> Announcements
           </button>
         </div>
 
-        {/* ═══ PRAYER TIMES TAB ═══ */}
         {activeTab === "prayer" && (
           <>
             <div className="glass-card p-5 sm:p-6 mb-5">
@@ -188,14 +245,18 @@ const Admin = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleModeChange("auto")}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${config.mode === "auto" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    config.mode === "auto" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+                  }`}
                 >
                   <p className="font-heading font-bold text-sm text-foreground mb-1">Automatic</p>
                   <p className="text-xs text-muted-foreground font-body">Times update automatically</p>
                 </button>
                 <button
                   onClick={() => handleModeChange("manual")}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${config.mode === "manual" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    config.mode === "manual" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+                  }`}
                 >
                   <p className="font-heading font-bold text-sm text-foreground mb-1">Manual</p>
                   <p className="text-xs text-muted-foreground font-body">Set custom times</p>
@@ -205,36 +266,47 @@ const Admin = () => {
 
             <div className="glass-card p-5 sm:p-6 mb-5">
               <h2 className="font-heading text-lg font-bold text-foreground mb-4">
-                {config.mode === "auto" ? "Current Automatic Times" : "Edit Prayer Times"}
+                {config.mode === "auto" ? "Current Automatic Times" : "Edit Manual Times"}
               </h2>
               <div className="space-y-3">
-                {prayerLabels.map((p) => (
-                  <div key={p.key} className="flex items-center gap-4 p-3 rounded-xl bg-secondary/50 border border-border/50">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-heading font-semibold text-sm text-foreground">{p.label}</p>
-                      <p className="font-urdu text-xs text-muted-foreground" dir="rtl">{p.urdu}</p>
+                {prayerLabels.map((p) => {
+                  const value =
+                    config.mode === "auto"
+                      ? autoTimes[p.key as keyof PrayerConfig["times"]]
+                      : config.times[p.key as keyof PrayerConfig["times"]];
+
+                  return (
+                    <div key={p.key} className="flex items-center gap-4 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-heading font-semibold text-sm text-foreground">{p.label}</p>
+                        <p className="font-urdu text-xs text-muted-foreground" dir="rtl">
+                          {p.urdu}
+                        </p>
+                      </div>
+                      <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => handleTimeChange(p.key, e.target.value)}
+                        disabled={config.mode === "auto"}
+                        className="w-28 sm:w-32 px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm font-body text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      value={config.times[p.key as keyof PrayerConfig["times"]]}
-                      onChange={(e) => handleTimeChange(p.key, e.target.value)}
-                      disabled={config.mode === "auto"}
-                      className="w-28 sm:w-32 px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm font-body text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {config.mode === "auto" && (
-                <p className="text-xs text-muted-foreground font-body mt-3">ℹ️ Asr changes from 4:45 PM to 4:50 PM on March 15th</p>
+                <p className="text-xs text-muted-foreground font-body mt-3">
+                  ℹ️ Asr changes from 4:45 PM to 4:50 PM on March 15th (masjid timezone)
+                </p>
               )}
             </div>
 
             <div className="glass-card p-5 sm:p-6 mb-5">
               <h2 className="font-heading text-lg font-bold text-foreground mb-2">Hijri Date Adjustment</h2>
               <p className="text-xs text-muted-foreground font-body mb-4">
-                India/Kashmir default is <span className="font-semibold text-foreground">-1</span>. Change only if your local moon-sighting differs.
+                India/Kashmir default is <span className="font-semibold text-foreground">-1</span>. Change only if your local
+                moon-sighting differs.
               </p>
-
               <div className="flex items-center gap-3">
                 <label className="text-sm font-body text-foreground">Offset (days)</label>
                 <select
@@ -256,13 +328,15 @@ const Admin = () => {
               </div>
             </div>
 
-            <button onClick={handleSavePrayer} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+            <button
+              onClick={handleSavePrayer}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            >
               <Save className="w-4 h-4" /> Save Prayer Times
             </button>
           </>
         )}
 
-        {/* ═══ ANNOUNCEMENTS TAB ═══ */}
         {activeTab === "announcements" && (
           <>
             <div className="glass-card p-5 sm:p-6 mb-5">
@@ -293,24 +367,27 @@ const Admin = () => {
               <div className="space-y-5">
                 {announcements.map((ann, idx) => (
                   <div key={ann.id} className="p-4 rounded-xl bg-secondary/30 border border-border space-y-3">
-                    {/* Header with toggle & delete */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-body font-medium text-muted-foreground">Alert #{idx + 1}</span>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateAnnouncement(ann.id, "active", !ann.active)}
-                          className={`flex items-center gap-1 text-xs font-body font-medium transition-colors ${ann.active ? "text-primary" : "text-muted-foreground"}`}
+                          className={`flex items-center gap-1 text-xs font-body font-medium transition-colors ${
+                            ann.active ? "text-primary" : "text-muted-foreground"
+                          }`}
                         >
                           {ann.active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                           {ann.active ? "Active" : "Inactive"}
                         </button>
-                        <button onClick={() => deleteAnnouncement(ann.id)} className="text-destructive/60 hover:text-destructive transition-colors">
+                        <button
+                          onClick={() => deleteAnnouncement(ann.id)}
+                          className="text-destructive/60 hover:text-destructive transition-colors"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Title */}
                     <input
                       type="text"
                       value={ann.title}
@@ -319,7 +396,6 @@ const Admin = () => {
                       className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm font-body placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
                     />
 
-                    {/* Urdu title */}
                     <input
                       type="text"
                       value={ann.titleUrdu}
@@ -329,7 +405,6 @@ const Admin = () => {
                       className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm font-urdu placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
                     />
 
-                    {/* Description */}
                     <textarea
                       value={ann.description}
                       onChange={(e) => updateAnnouncement(ann.id, "description", e.target.value)}
@@ -338,7 +413,6 @@ const Admin = () => {
                       className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm font-body placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
                     />
 
-                    {/* Image upload */}
                     <div>
                       <label className="text-xs font-body font-medium text-foreground/70 mb-1.5 flex items-center gap-1.5">
                         <Image className="w-3.5 h-3.5" /> Event Image
@@ -355,7 +429,9 @@ const Admin = () => {
                         </div>
                       )}
                       <input
-                        ref={el => { fileInputRefs.current[ann.id] = el; }}
+                        ref={(el) => {
+                          fileInputRefs.current[ann.id] = el;
+                        }}
                         type="file"
                         accept="image/*"
                         onChange={(e) => {
@@ -372,7 +448,6 @@ const Admin = () => {
                       </button>
                     </div>
 
-                    {/* Date range */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-body font-medium text-foreground/70 mb-1 flex items-center gap-1">
@@ -398,15 +473,30 @@ const Admin = () => {
                       </div>
                     </div>
 
-                    {/* Status indicator */}
                     {(() => {
-                      const today = new Date().toISOString().slice(0, 10);
+                      const today = getMasjidISODate();
                       const isLive = ann.active && ann.startDate <= today && ann.endDate >= today;
                       const isExpired = ann.endDate < today;
                       const isScheduled = ann.startDate > today;
                       return (
-                        <p className={`text-[10px] font-body font-medium ${isLive ? "text-primary" : isExpired ? "text-destructive" : isScheduled ? "text-accent" : "text-muted-foreground"}`}>
-                          {isLive ? "● Currently live on website" : isExpired ? "● Expired" : isScheduled ? "● Scheduled" : "● Inactive"}
+                        <p
+                          className={`text-[10px] font-body font-medium ${
+                            isLive
+                              ? "text-primary"
+                              : isExpired
+                                ? "text-destructive"
+                                : isScheduled
+                                  ? "text-accent"
+                                  : "text-muted-foreground"
+                          }`}
+                        >
+                          {isLive
+                            ? "● Currently live on website"
+                            : isExpired
+                              ? "● Expired"
+                              : isScheduled
+                                ? "● Scheduled"
+                                : "● Inactive"}
                         </p>
                       );
                     })()}
@@ -426,5 +516,4 @@ const Admin = () => {
       </div>
     </div>
   );
-};
-export default Admin;
+}

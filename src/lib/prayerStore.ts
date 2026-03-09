@@ -1,4 +1,9 @@
+import { getMasjidISODate } from "@/lib/localDate";
+import { emitSameTabStorageEvents, safeGetItem, safeSetItem } from "@/lib/safeStorage";
+import { broadcastSync } from "@/lib/syncBus";
+
 const STORAGE_KEY = "masjid-prayer-config";
+const CHANGE_EVENT = "masjid-prayer-config-changed";
 
 export interface PrayerConfig {
   mode: "auto" | "manual";
@@ -20,9 +25,12 @@ const defaultTimes: PrayerConfig["times"] = {
 };
 
 export function getDefaultAutoTimes(): PrayerConfig["times"] {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
+  // Use masjid timezone to avoid off-by-one day issues for users outside India.
+  const iso = getMasjidISODate();
+  const [, mm, dd] = iso.split("-").map(Number);
+  const month = mm;
+  const day = dd;
+
   let asrTime = "4:45 PM";
   if (month > 3 || (month === 3 && day >= 15)) {
     asrTime = "4:50 PM";
@@ -32,14 +40,22 @@ export function getDefaultAutoTimes(): PrayerConfig["times"] {
 
 export function loadPrayerConfig(): PrayerConfig {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = safeGetItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
-  return { mode: "auto", times: getDefaultAutoTimes() };
+  } catch {
+    // ignore
+  }
+  return { mode: "auto", times: { ...defaultTimes } };
 }
 
 export function savePrayerConfig(config: PrayerConfig) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+  try {
+    safeSetItem(STORAGE_KEY, JSON.stringify(config));
+  } catch {
+    // ignore
+  }
+  emitSameTabStorageEvents(CHANGE_EVENT);
+  broadcastSync("prayer");
 }
 
 export function getActivePrayerTimes(): PrayerConfig["times"] {
