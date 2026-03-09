@@ -1,3 +1,5 @@
+import { getMasjidISODate } from "@/lib/localDate";
+
 export interface RamadanDay {
   day: number;
   date: string; // YYYY-MM-DD
@@ -41,17 +43,11 @@ export const ramadanSchedule: RamadanDay[] = [
 ];
 
 export function getTodayRamadan(): RamadanDay | null {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const todayStr = getMasjidISODate();
   return ramadanSchedule.find((d) => d.date === todayStr) || null;
 }
 
 export function isRamadan(): boolean {
-  const today = new Date();
-  const start = new Date("2026-02-19");
-  const end = new Date("2026-03-20");
-  return today >= start && today <= end;
+  const todayStr = getMasjidISODate();
+  return todayStr >= "2026-02-19" && todayStr <= "2026-03-20";
 }

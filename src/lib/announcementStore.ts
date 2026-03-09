@@ -71,11 +71,20 @@ export function loadAnnouncements(): Announcement[] {
 }
 
 export function saveAnnouncements(announcements: Announcement[]): void {
+  const value = JSON.stringify(announcements);
+
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(announcements));
+    localStorage.setItem(STORAGE_KEY, value);
   } catch {
-    /* ignore */
+    // Common failure: QUOTA_EXCEEDED_ERR due to base64 images; clear then retry so deletes actually persist.
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_KEY, value);
+    } catch {
+      /* ignore */
+    }
   }
+
   // "storage" doesn't fire in the same tab on normal localStorage writes, so we dispatch our own.
   window.dispatchEvent(new Event("storage"));
   window.dispatchEvent(new Event("masjid-announcements-changed"));

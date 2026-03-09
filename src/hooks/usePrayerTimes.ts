@@ -83,10 +83,13 @@ async function fetchPrayerTimes(hijriDayOffset: number) {
   const t = data.data.timings;
   const g = data.data.date.gregorian;
 
-  // Apply Hijri offset by shifting the Gregorian day, then formatting in Islamic calendar.
-  const base = new Date();
+  // Apply Hijri offset by shifting the MASJID (Asia/Kolkata) Gregorian day, then formatting in Islamic calendar.
+  const baseISO = getMasjidISODate();
+  const [y, m, d] = baseISO.split("-").map(Number);
+  const base = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)); // noon UTC avoids edge cases
   const shifted = new Date(base);
-  shifted.setDate(base.getDate() + hijriDayOffset);
+  shifted.setUTCDate(base.getUTCDate() + hijriDayOffset);
+
   const hijri = getHijriFromIntl(shifted) ?? {
     // Fallback to API if Intl calendar isn't supported.
     day: data.data.date.hijri.day,
