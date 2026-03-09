@@ -64,8 +64,14 @@ export function loadAnnouncements(): Announcement[] {
 }
 
 export function saveAnnouncements(announcements: Announcement[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(announcements));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(announcements));
+  } catch {
+    /* ignore */
+  }
+  // "storage" doesn't fire in the same tab on normal localStorage writes, so we dispatch our own.
   window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("masjid-announcements-changed"));
 }
 
 export function getActiveAnnouncements(): Announcement[] {

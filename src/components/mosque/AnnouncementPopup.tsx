@@ -20,6 +20,8 @@ const AnnouncementPopup = () => {
       const cleaned = all.filter((a: any) => a.endDate >= today);
       if (cleaned.length < all.length) {
         localStorage.setItem("masjid-announcements", JSON.stringify(cleaned));
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event("masjid-announcements-changed"));
       }
       // Show first active
       setAnnouncement(active[0]);
