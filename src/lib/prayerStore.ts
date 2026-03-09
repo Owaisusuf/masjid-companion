@@ -1,4 +1,5 @@
 import { getMasjidISODate } from "@/lib/localDate";
+import { compactStoredAnnouncements } from "@/lib/announcementStore";
 import { emitSameTabStorageEvents, safeGetItem, safeSetItem } from "@/lib/safeStorage";
 import { broadcastSync } from "@/lib/syncBus";
 
