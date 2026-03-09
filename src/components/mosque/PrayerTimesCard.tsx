@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
+import { useHijriAdjustment } from "@/hooks/useHijriAdjustment";
 import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar, Landmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getActivePrayerTimes } from "@/lib/prayerStore";
@@ -9,7 +10,7 @@ const prayerNames = [
   { key: "Dhuhr", label: "Zuhr", urdu: "ظہر", Icon: Sun },
   { key: "Asr", label: "Asr", urdu: "عصر", Icon: CloudSun },
   { key: "Maghrib", label: "Maghrib", urdu: "مغرب", Icon: Sunset },
-  { key: "Isha", label: "Isha", urdu: "عشاء", Icon: Star },
+  { key: "Isha", label: "عشاء", urdu: "عشاء", Icon: Star },
 ];
 
 function parseTimeToMinutes(time12: string): number {
@@ -49,7 +50,8 @@ function isJummahToday(): boolean {
 const JUMMAH_TIME = "1:30 PM";
 
 const PrayerTimesCard = () => {
-  const { data, isLoading } = usePrayerTimes();
+  const { adjustment } = useHijriAdjustment();
+  const { data, isLoading } = usePrayerTimes(adjustment);
   const [masjidTimes, setMasjidTimes] = useState(getActivePrayerTimes());
   const [nextPrayer, setNextPrayer] = useState<string | null>(null);
 

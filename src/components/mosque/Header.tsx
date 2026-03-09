@@ -1,4 +1,5 @@
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
+import { useHijriAdjustment } from "@/hooks/useHijriAdjustment";
 import { getTodayRamadan, isRamadan } from "@/data/ramadan-2026";
 import { MapPin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -7,7 +8,8 @@ import kalimaImg from "@/assets/kalima-calligraphy.png";
 const mapUrl = "https://maps.app.goo.gl/LMtUJFA2gYn9aqV28?g_st=awb";
 
 const Header = () => {
-  const { data } = usePrayerTimes();
+  const { adjustment } = useHijriAdjustment();
+  const { data } = usePrayerTimes(adjustment);
   const todayRamadan = getTodayRamadan();
   const ramadanActive = isRamadan();
 
