@@ -125,7 +125,9 @@ const PrayerTimesCard = () => {
       )}
 
       {/* Prayer cards grid */}
-      <div className={`grid grid-cols-2 sm:grid-cols-${showJummah ? "6" : "5"} gap-2 sm:gap-3`}>
+      <div
+        className={`grid grid-cols-2 gap-2 sm:gap-3 ${showJummah ? "sm:grid-cols-6" : "sm:grid-cols-5"}`}
+      >
         {prayerNames.map((p) => {
           const isNext = nextPrayer === p.key;
           const IconComp = p.Icon;
