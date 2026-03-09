@@ -115,8 +115,18 @@ export default function Admin() {
   };
 
   const handleSavePrayer = () => {
-    savePrayerConfig(config);
-    toast({ title: "Saved", description: "Prayer settings updated." });
+    const persisted = savePrayerConfig(config);
+
+    if (persisted) {
+      toast({ title: "Saved", description: "Prayer settings updated." });
+      return;
+    }
+
+    toast({
+      title: "Storage full",
+      description: "Prayer times changed here but could not be saved for refresh/other browsers.",
+      variant: "destructive",
+    });
   };
 
   const addAnnouncement = () => {
