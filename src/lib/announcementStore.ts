@@ -1,5 +1,5 @@
 import eventImage from "@/assets/event-deeni-ijtema.jpg";
-import { getLocalISODate } from "@/lib/localDate";
+import { getMasjidISODate } from "@/lib/localDate";
 
 export interface Announcement {
   id: string;
@@ -54,7 +54,7 @@ export function loadAnnouncements(): Announcement[] {
   }
 
   // Auto-cleanup expired announcements (runs even if popup isn't opened)
-  const today = getLocalISODate();
+  const today = getMasjidISODate();
   const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
   if (cleaned.length !== announcements.length) {
     try {
@@ -83,7 +83,7 @@ export function saveAnnouncements(announcements: Announcement[]): void {
 
 export function getActiveAnnouncements(): Announcement[] {
   const all = loadAnnouncements();
-  const today = getLocalISODate();
+  const today = getMasjidISODate();
   return all.filter((a) => a.active && a.startDate <= today && a.endDate >= today);
 }
 
@@ -94,8 +94,8 @@ export function getDefaultAnnouncement(): Announcement {
     titleUrdu: "",
     description: "",
     imageUrl: "",
-    startDate: getLocalISODate(),
-    endDate: getLocalISODate(new Date(Date.now() + 7 * 86400000)),
+    startDate: getMasjidISODate(),
+    endDate: getMasjidISODate(new Date(Date.now() + 7 * 86400000)),
     active: true,
   };
 }
