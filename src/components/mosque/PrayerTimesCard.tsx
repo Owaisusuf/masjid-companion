@@ -10,7 +10,7 @@ const prayerNames = [
   { key: "Dhuhr", label: "Zuhr", urdu: "ظہر", Icon: Sun },
   { key: "Asr", label: "Asr", urdu: "عصر", Icon: CloudSun },
   { key: "Maghrib", label: "Maghrib", urdu: "مغرب", Icon: Sunset },
-  { key: "Isha", label: "عشاء", urdu: "عشاء", Icon: Star },
+  { key: "Isha", label: "Isha", urdu: "عشاء", Icon: Star },
 ];
 
 function parseTimeToMinutes(time12: string): number {
