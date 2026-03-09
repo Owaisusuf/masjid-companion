@@ -22,6 +22,13 @@ const STORAGE_KEY = "masjid-announcements";
 const CHANGE_EVENT = "masjid-announcements-changed";
 const LEGACY_SEEDED_ANNOUNCEMENT_IDS = new Set(["deeni-ijtema-2026"]);
 
+function stripDataUriImages(value: Announcement[]): Announcement[] {
+  return value.map((a) => ({
+    ...a,
+    imageUrl: a.imageUrl.startsWith("data:") ? "" : a.imageUrl,
+  }));
+}
+
 function persistAnnouncements(value: Announcement[]): boolean {
   try {
     const json = JSON.stringify(value);
@@ -29,12 +36,22 @@ function persistAnnouncements(value: Announcement[]): boolean {
     if (ok) return true;
 
     // Quota fallback: strip base64 payloads and retry with lightweight records.
-    const stripped = value.map((a) => ({
-      ...a,
-      imageUrl: a.imageUrl.startsWith("data:") ? "" : a.imageUrl,
-    }));
-
+    const stripped = stripDataUriImages(value);
     return safeSetItem(STORAGE_KEY, JSON.stringify(stripped));
+  } catch {
+    return false;
+  }
+}
+
+export function compactStoredAnnouncements(): boolean {
+  try {
+    const raw = safeGetItem(STORAGE_KEY);
+    if (!raw) return false;
+
+    const parsed: unknown = JSON.parse(raw);
+    const normalized = normalizeAnnouncements(parsed);
+    const compacted = stripDataUriImages(normalized);
+    return safeSetItem(STORAGE_KEY, JSON.stringify(compacted));
   } catch {
     return false;
   }

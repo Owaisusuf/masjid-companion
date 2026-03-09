@@ -49,14 +49,28 @@ export function loadPrayerConfig(): PrayerConfig {
   return { mode: "auto", times: { ...defaultTimes } };
 }
 
-export function savePrayerConfig(config: PrayerConfig) {
+export function savePrayerConfig(config: PrayerConfig): boolean {
+  let persisted = false;
+
   try {
-    safeSetItem(STORAGE_KEY, JSON.stringify(config));
+    persisted = safeSetItem(STORAGE_KEY, JSON.stringify(config));
   } catch {
-    // ignore
+    persisted = false;
   }
+
+  // If quota is full due to heavy announcement payloads, compact them and retry.
+  if (!persisted) {
+    compactStoredAnnouncements();
+    try {
+      persisted = safeSetItem(STORAGE_KEY, JSON.stringify(config));
+    } catch {
+      persisted = false;
+    }
+  }
+
   emitSameTabStorageEvents(CHANGE_EVENT);
   broadcastSync("prayer");
+  return persisted;
 }
 
 export function getActivePrayerTimes(): PrayerConfig["times"] {
