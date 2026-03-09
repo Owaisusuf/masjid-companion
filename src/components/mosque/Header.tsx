@@ -63,12 +63,12 @@ const Header = () => {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                 <span className="font-arabic text-sm text-amber-300">رمضان</span>
                 <span className="text-white font-heading font-semibold text-xs">
-                  {todayRamadan.day} Ramadan 1447 AH
+                  {(data?.hijri?.day || todayRamadan.day).toString()} Ramadan {(data?.hijri?.year || "1447")} AH
                 </span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-400/30">
                 <span className="text-amber-300 font-heading font-semibold text-xs">
-                  ☪ Ramadan Mubarak — Day {todayRamadan.day}
+                  ☪ Ramadan Mubarak — Day {(data?.hijri?.day || todayRamadan.day).toString()}
                 </span>
               </div>
             </>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLocalISODate } from "@/lib/localDate";
+import { getMasjidISODate, MASJID_TIMEZONE } from "@/lib/localDate";
 import { DEFAULT_HIJRI_ADJUSTMENT_INDIA } from "@/lib/hijriAdjustmentStore";
 
 const LAT = 34.0522129;
@@ -35,24 +35,68 @@ function formatTo12Hour(time24: string): string {
   return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
-async function fetchPrayerTimes(hijriDateAdjustment: number) {
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, "0");
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yyyy = now.getFullYear();
+function getHijriFromIntl(date: Date): HijriDate | null {
+  try {
+    // Force masjid timezone so the Hijri day doesn't drift for users outside India.
+    const en = new Intl.DateTimeFormat("en-u-ca-islamic", {
+      timeZone: MASJID_TIMEZONE,
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).formatToParts(date);
 
-  // NOTE: `hijriDateAdjustment` affects Hijri date only; it does NOT shift prayer timings.
+    const ar = new Intl.DateTimeFormat("ar-u-ca-islamic", {
+      timeZone: MASJID_TIMEZONE,
+      month: "long",
+    }).formatToParts(date);
+
+    const day = en.find((p) => p.type === "day")?.value;
+    const month = en.find((p) => p.type === "month")?.value;
+    const year = en.find((p) => p.type === "year")?.value;
+    const monthAr = ar.find((p) => p.type === "month")?.value;
+
+    if (!day || !month || !year || !monthAr) return null;
+    return { day, month, monthAr, year };
+  } catch {
+    return null;
+  }
+}
+
+function parseMasjidDateParts() {
+  const iso = getMasjidISODate(); // YYYY-MM-DD in Asia/Kolkata
+  const [yyyy, mm, dd] = iso.split("-");
+  return { yyyy, mm, dd, iso };
+}
+
+async function fetchPrayerTimes(hijriDayOffset: number) {
+  const { yyyy, mm, dd } = parseMasjidDateParts();
+
+  // Prayer timings are computed for the masjid location; Hijri is computed locally (Intl) so we can reliably apply offset.
   const url =
     `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}` +
-    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0&hijriDateAdjustment=${hijriDateAdjustment}`;
+    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch prayer times");
 
   const data = await res.json();
   const t = data.data.timings;
-  const h = data.data.date.hijri;
   const g = data.data.date.gregorian;
+
+  // Apply Hijri offset by shifting the MASJID (Asia/Kolkata) Gregorian day, then formatting in Islamic calendar.
+  const baseISO = getMasjidISODate();
+  const [y, m, d] = baseISO.split("-").map(Number);
+  const base = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)); // noon UTC avoids edge cases
+  const shifted = new Date(base);
+  shifted.setUTCDate(base.getUTCDate() + hijriDayOffset);
+
+  const hijri = getHijriFromIntl(shifted) ?? {
+    // Fallback to API if Intl calendar isn't supported.
+    day: data.data.date.hijri.day,
+    month: data.data.date.hijri.month.en,
+    monthAr: data.data.date.hijri.month.ar,
+    year: data.data.date.hijri.year,
+  };
 
   return {
     prayers: {
@@ -63,12 +107,7 @@ async function fetchPrayerTimes(hijriDateAdjustment: number) {
       Maghrib: formatTo12Hour(t.Maghrib),
       Isha: formatTo12Hour(t.Isha),
     } as PrayerTimesData,
-    hijri: {
-      day: h.day,
-      month: h.month.en,
-      monthAr: h.month.ar,
-      year: h.year,
-    } as HijriDate,
+    hijri,
     gregorian: {
       day: g.day,
       month: g.month.en,
@@ -78,12 +117,12 @@ async function fetchPrayerTimes(hijriDateAdjustment: number) {
   };
 }
 
-export function usePrayerTimes(hijriDateAdjustment: number = DEFAULT_HIJRI_ADJUSTMENT_INDIA) {
-  const todayLocal = getLocalISODate();
+export function usePrayerTimes(hijriDayOffset: number = DEFAULT_HIJRI_ADJUSTMENT_INDIA) {
+  const todayMasjid = getMasjidISODate();
 
   return useQuery({
-    queryKey: ["prayerTimes", todayLocal, hijriDateAdjustment],
-    queryFn: () => fetchPrayerTimes(hijriDateAdjustment),
+    queryKey: ["prayerTimes", todayMasjid, hijriDayOffset],
+    queryFn: () => fetchPrayerTimes(hijriDayOffset),
     staleTime: 1000 * 60 * 30,
     refetchInterval: 1000 * 60 * 30,
     refetchIntervalInBackground: true,
