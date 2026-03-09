@@ -1,4 +1,6 @@
 import { getLocalISODate } from "@/lib/localDate";
+import { emitSameTabStorageEvents, safeGetItem, safeSetItem } from "@/lib/safeStorage";
+import { broadcastSync } from "@/lib/syncBus";
 
 const STORAGE_KEY = "masjid-hijri-adjustment";
 
@@ -17,7 +19,7 @@ export function clampHijriAdjustment(value: number): HijriAdjustment {
 
 export function loadHijriAdjustment(): HijriAdjustment {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = safeGetItem(STORAGE_KEY);
     if (raw == null) return DEFAULT_HIJRI_ADJUSTMENT_INDIA;
     const n = Number(raw);
     if (!Number.isFinite(n)) return DEFAULT_HIJRI_ADJUSTMENT_INDIA;
@@ -30,13 +32,13 @@ export function loadHijriAdjustment(): HijriAdjustment {
 export function saveHijriAdjustment(value: number): void {
   const adj = clampHijriAdjustment(value);
   try {
-    localStorage.setItem(STORAGE_KEY, String(adj));
+    safeSetItem(STORAGE_KEY, String(adj));
     // Keep a timestamp to help debugging/time travel if needed.
-    localStorage.setItem(`${STORAGE_KEY}:updatedAt`, getLocalISODate());
+    safeSetItem(`${STORAGE_KEY}:updatedAt`, getLocalISODate());
   } catch {
     /* ignore */
   }
   // Ensure same-tab UI updates.
-  window.dispatchEvent(new Event("storage"));
-  window.dispatchEvent(new Event("masjid-hijri-adjustment-changed"));
+  emitSameTabStorageEvents("masjid-hijri-adjustment-changed");
+  broadcastSync("hijri");
 }
