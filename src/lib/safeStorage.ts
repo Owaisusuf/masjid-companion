@@ -2,6 +2,12 @@ type StorageBackend = "local" | "session" | "memory";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
+/**
+ * In-memory fallback/override.
+ * - For memory backend: this is the primary store.
+ * - For local/session backend: this stores last-write values when persistent write fails,
+ *   so reads don't immediately revert to stale persistent data.
+ */
 const memoryStore = new Map<string, string>();
 
 let cachedBackend: StorageBackend | null = null;
@@ -23,7 +29,6 @@ function resolveStorage(): { backend: StorageBackend; storage: StorageLike | nul
     return { backend: cachedBackend, storage: cachedStorage };
   }
 
-  // Prefer localStorage when writable.
   try {
     if (typeof localStorage !== "undefined" && testStorage(localStorage)) {
       cachedBackend = "local";
@@ -34,7 +39,6 @@ function resolveStorage(): { backend: StorageBackend; storage: StorageLike | nul
     // ignore
   }
 
-  // Fallback: sessionStorage (often works when cookies/localStorage are blocked).
   try {
     if (typeof sessionStorage !== "undefined" && testStorage(sessionStorage)) {
       cachedBackend = "session";
@@ -55,26 +59,33 @@ export function getStorageBackend(): StorageBackend {
 }
 
 export function safeGetItem(key: string): string | null {
+  // Prefer in-memory override first. This prevents stale reads when a previous
+  // persistent write failed (quota/blocked).
+  if (memoryStore.has(key)) return memoryStore.get(key) ?? null;
+
   const { storage, backend } = resolveStorage();
-  if (backend === "memory") return memoryStore.get(key) ?? null;
+  if (backend === "memory") return null;
+
   try {
     return storage?.getItem(key) ?? null;
   } catch {
-    return memoryStore.get(key) ?? null;
+    return null;
   }
 }
 
 export function safeSetItem(key: string, value: string): boolean {
   const { storage, backend } = resolveStorage();
+
   if (backend === "memory") {
     memoryStore.set(key, value);
     return true;
   }
+
   try {
     storage?.setItem(key, value);
+    memoryStore.delete(key); // clear stale override after successful persistent write
     return true;
   } catch {
-    // Quota exceeded or blocked — fall back to memory
     memoryStore.set(key, value);
     return false;
   }
@@ -82,8 +93,10 @@ export function safeSetItem(key: string, value: string): boolean {
 
 export function safeRemoveItem(key: string): boolean {
   const { storage, backend } = resolveStorage();
-  memoryStore.delete(key); // always clear memory copy too
+  memoryStore.delete(key);
+
   if (backend === "memory") return true;
+
   try {
     storage?.removeItem(key);
     return true;
@@ -93,7 +106,7 @@ export function safeRemoveItem(key: string): boolean {
 }
 
 export function emitSameTabStorageEvents(customEventName?: string) {
-  // "storage" doesn't fire on the same tab for localStorage writes.
   window.dispatchEvent(new Event("storage"));
   if (customEventName) window.dispatchEvent(new Event(customEventName));
 }
+
