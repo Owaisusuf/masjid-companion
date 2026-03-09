@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Bell, BellOff, BellRing, X, Volume2 } from "lucide-react";
 import { getActivePrayerTimes } from "@/lib/prayerStore";
+import adhanAudio from "@/assets/adhan-hayya.mp3";
 
 function parseTimeTo24(time12: string): { h: number; m: number } {
   const [time, period] = time12.split(" ");
@@ -21,51 +22,79 @@ const PRAYER_LABELS: Record<string, string> = {
 
 const PrayerAlarm = () => {
   const [enabled, setEnabled] = useState(() => {
-    try { return localStorage.getItem("prayer-alarm-enabled") === "true"; } catch { return false; }
+    try {
+      return localStorage.getItem("prayer-alarm-enabled") === "true";
+    } catch {
+      return false;
+    }
   });
   const [alertPrayer, setAlertPrayer] = useState<string | null>(null);
   const [notifiedToday, setNotifiedToday] = useState<Set<string>>(new Set());
   const [showTooltip, setShowTooltip] = useState(() => {
-    try { return !localStorage.getItem("prayer-alarm-banner-dismissed"); } catch { return true; }
-  });
-  const audioRef = useRef<AudioContext | null>(null);
-
-  const playAdhanTone = useCallback(() => {
     try {
-      const ctx = new AudioContext();
-      audioRef.current = ctx;
-      const notes = [440, 494, 523, 587, 523, 494, 440];
-      const noteDuration = 0.4;
-      notes.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, ctx.currentTime + i * noteDuration);
-        gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * noteDuration + 0.05);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + (i + 1) * noteDuration);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + i * noteDuration);
-        osc.stop(ctx.currentTime + (i + 1) * noteDuration);
-      });
-    } catch { /* Audio not supported */ }
+      return !localStorage.getItem("prayer-alarm-banner-dismissed");
+    } catch {
+      return true;
+    }
+  });
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const getAudio = useCallback(() => {
+    if (!audioRef.current) {
+      const audio = new Audio(adhanAudio);
+      audio.preload = "auto";
+      audioRef.current = audio;
+    }
+    return audioRef.current;
+  }, []);
+
+  // Prime/unlock audio after a user gesture (best-effort; browsers may still restrict autoplay)
+  const primeAudio = useCallback(async () => {
+    try {
+      const audio = getAudio();
+      audio.muted = true;
+      await audio.play();
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+    } catch {
+      /* ignore */
+    }
+  }, [getAudio]);
+
+  const playAdhan = useCallback(async () => {
+    try {
+      const audio = getAudio();
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+      await audio.play();
+    } catch {
+      /* ignore */
+    }
+  }, [getAudio]);
+
+  const stopAdhan = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
   }, []);
 
   const dismissAlert = useCallback(() => {
     setAlertPrayer(null);
-    if (audioRef.current) {
-      audioRef.current.close();
-      audioRef.current = null;
-    }
-  }, []);
+    stopAdhan();
+  }, [stopAdhan]);
 
   const toggleAlarm = useCallback(async () => {
     if (enabled) {
       setEnabled(false);
       localStorage.setItem("prayer-alarm-enabled", "false");
+      stopAdhan();
       return;
     }
+
     if ("Notification" in window) {
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
@@ -73,14 +102,16 @@ const PrayerAlarm = () => {
         localStorage.setItem("prayer-alarm-enabled", "true");
         setShowTooltip(false);
         localStorage.setItem("prayer-alarm-banner-dismissed", "true");
+        await primeAudio();
       }
     } else {
       setEnabled(true);
       localStorage.setItem("prayer-alarm-enabled", "true");
       setShowTooltip(false);
       localStorage.setItem("prayer-alarm-banner-dismissed", "true");
+      await primeAudio();
     }
-  }, [enabled]);
+  }, [enabled, primeAudio, stopAdhan]);
 
   const dismissTooltip = () => {
     setShowTooltip(false);
@@ -89,20 +120,24 @@ const PrayerAlarm = () => {
 
   useEffect(() => {
     if (!enabled) return;
+
     const check = () => {
       const now = new Date();
       const nowH = now.getHours();
       const nowM = now.getMinutes();
       const prayers = getActivePrayerTimes();
+
       for (const key of PRAYER_KEYS) {
         if (!prayers[key] || notifiedToday.has(key)) continue;
         const { h, m } = parseTimeTo24(prayers[key]);
+
         if (nowH === h && nowM === m) {
           setAlertPrayer(key);
-          setNotifiedToday(prev => new Set(prev).add(key));
-          playAdhanTone();
+          setNotifiedToday((prev) => new Set(prev).add(key));
+          void playAdhan();
+
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(`🕌 ${PRAYER_LABELS[key] || key}`, {
+            new Notification(`${PRAYER_LABELS[key] || key}`, {
               body: `It's time for ${key} prayer — حَيَّ عَلَى الصَّلَاة`,
               icon: "/favicon.png",
             });
@@ -110,10 +145,11 @@ const PrayerAlarm = () => {
         }
       }
     };
+
     const interval = setInterval(check, 15000);
     check();
     return () => clearInterval(interval);
-  }, [enabled, notifiedToday, playAdhanTone]);
+  }, [enabled, notifiedToday, playAdhan]);
 
   useEffect(() => {
     const checkMidnight = () => {
@@ -125,6 +161,10 @@ const PrayerAlarm = () => {
     const interval = setInterval(checkMidnight, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    return () => stopAdhan();
+  }, [stopAdhan]);
 
   return (
     <>
@@ -153,9 +193,7 @@ const PrayerAlarm = () => {
           title={enabled ? "Prayer alarm is ON — click to disable" : "Enable prayer alarm"}
         >
           {enabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
-          <span className="text-[8px] font-bold font-body leading-none">
-            {enabled ? "ON" : "OFF"}
-          </span>
+          <span className="text-[8px] font-bold font-body leading-none">{enabled ? "ON" : "OFF"}</span>
         </button>
       </div>
 
@@ -166,12 +204,8 @@ const PrayerAlarm = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
               <Volume2 className="w-8 h-8 text-primary animate-pulse" />
             </div>
-            <h3 className="font-heading text-xl font-bold text-foreground mb-1">
-              {PRAYER_LABELS[alertPrayer] || alertPrayer}
-            </h3>
-            <p className="text-muted-foreground text-sm font-body mb-2">
-              It's time for prayer
-            </p>
+            <h3 className="font-heading text-xl font-bold text-foreground mb-1">{PRAYER_LABELS[alertPrayer] || alertPrayer}</h3>
+            <p className="text-muted-foreground text-sm font-body mb-2">It's time for prayer</p>
             <p className="font-arabic text-accent text-lg mb-5" dir="rtl">
               حَيَّ عَلَى الصَّلَاة
             </p>
@@ -189,3 +223,4 @@ const PrayerAlarm = () => {
 };
 
 export default PrayerAlarm;
+
