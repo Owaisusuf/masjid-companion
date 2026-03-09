@@ -30,7 +30,11 @@ const AnnouncementPopup = () => {
 
     check();
     window.addEventListener("storage", check);
-    return () => window.removeEventListener("storage", check);
+    window.addEventListener("masjid-announcements-changed", check);
+    return () => {
+      window.removeEventListener("storage", check);
+      window.removeEventListener("masjid-announcements-changed", check);
+    };
   }, []);
 
   const dismiss = () => {

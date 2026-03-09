@@ -54,6 +54,7 @@ export function loadAnnouncements(): Announcement[] {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
       window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("masjid-announcements-changed"));
     } catch {
       /* ignore */
     }
