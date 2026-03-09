@@ -20,6 +20,8 @@ const AnnouncementPopup = () => {
       const cleaned = all.filter((a: any) => a.endDate >= today);
       if (cleaned.length < all.length) {
         localStorage.setItem("masjid-announcements", JSON.stringify(cleaned));
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event("masjid-announcements-changed"));
       }
       // Show first active
       setAnnouncement(active[0]);
@@ -28,7 +30,11 @@ const AnnouncementPopup = () => {
 
     check();
     window.addEventListener("storage", check);
-    return () => window.removeEventListener("storage", check);
+    window.addEventListener("masjid-announcements-changed", check);
+    return () => {
+      window.removeEventListener("storage", check);
+      window.removeEventListener("masjid-announcements-changed", check);
+    };
   }, []);
 
   const dismiss = () => {

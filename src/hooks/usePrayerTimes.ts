@@ -3,6 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 const LAT = 34.0522129;
 const LNG = 74.7997336;
 
+// India (incl. Kashmir) often follows a moon-sighting calendar that can be 1 day behind computed calendars.
+// This offset keeps the Hijri date aligned with the local masjid context.
+const HIJRI_ADJUSTMENT_INDIA = -1;
+
 export interface PrayerTimesData {
   Fajr: string;
   Sunrise: string;
@@ -33,6 +37,10 @@ function formatTo12Hour(time24: string): string {
   return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 async function fetchPrayerTimes() {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, "0");
@@ -40,7 +48,7 @@ async function fetchPrayerTimes() {
   const yyyy = now.getFullYear();
 
   const res = await fetch(
-    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${LAT}&longitude=${LNG}&method=1&school=0`
+    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${LAT}&longitude=${LNG}&method=1&school=0&adjustment=${HIJRI_ADJUSTMENT_INDIA}`
   );
 
   if (!res.ok) throw new Error("Failed to fetch prayer times");
@@ -75,9 +83,12 @@ async function fetchPrayerTimes() {
 
 export function usePrayerTimes() {
   return useQuery({
-    queryKey: ["prayerTimes"],
+    queryKey: ["prayerTimes", todayKey(), HIJRI_ADJUSTMENT_INDIA],
     queryFn: fetchPrayerTimes,
-    staleTime: 1000 * 60 * 60 * 6,
+    staleTime: 1000 * 60 * 30,
+    refetchInterval: 1000 * 60 * 30,
+    refetchIntervalInBackground: true,
     retry: 2,
   });
 }
+
