@@ -9,8 +9,19 @@ const AnnouncementPopup = () => {
   useEffect(() => {
     const check = () => {
       const active = getActiveAnnouncements();
-      if (!active.length) { setAnnouncement(null); setVisible(false); return; }
-      // Always show the first active announcement on every load/refresh
+      if (!active.length) { 
+        setAnnouncement(null); 
+        setVisible(false); 
+        return; 
+      }
+      // Auto-cleanup expired announcements
+      const all = JSON.parse(localStorage.getItem("masjid-announcements") || "[]");
+      const today = new Date().toISOString().slice(0, 10);
+      const cleaned = all.filter((a: any) => a.endDate >= today);
+      if (cleaned.length < all.length) {
+        localStorage.setItem("masjid-announcements", JSON.stringify(cleaned));
+      }
+      // Show first active
       setAnnouncement(active[0]);
       setTimeout(() => setVisible(true), 500);
     };

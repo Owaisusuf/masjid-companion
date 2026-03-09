@@ -72,7 +72,10 @@ const Admin = () => {
   };
 
   const deleteAnnouncement = (id: string) => {
-    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    const updated = announcements.filter(a => a.id !== id);
+    setAnnouncements(updated);
+    saveAnnouncements(updated); // Persist deletion immediately
+    toast({ title: "Deleted", description: "Announcement removed." });
   };
 
   const handleImageUpload = (id: string, file: File) => {
