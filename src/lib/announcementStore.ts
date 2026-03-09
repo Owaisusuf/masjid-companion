@@ -25,17 +25,42 @@ const DEFAULT_ANNOUNCEMENT: Announcement = {
 };
 
 export function loadAnnouncements(): Announcement[] {
+  let parsed: unknown = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (raw !== null) parsed = JSON.parse(raw);
+  } catch {
+    /* ignore */
+  }
+
+  // If storage exists and is an array (even empty), treat it as the source of truth.
+  // This prevents deleted announcements from being re-seeded automatically.
+  let announcements: Announcement[];
+  if (Array.isArray(parsed)) {
+    announcements = parsed as Announcement[];
+  } else {
+    announcements = [DEFAULT_ANNOUNCEMENT];
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(announcements));
+    } catch {
+      /* ignore */
     }
-  } catch { /* ignore */ }
-  // Seed default
-  const defaults = [DEFAULT_ANNOUNCEMENT];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
-  return defaults;
+  }
+
+  // Auto-cleanup expired announcements (runs even if popup isn't opened)
+  const today = new Date().toISOString().slice(0, 10);
+  const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
+  if (cleaned.length !== announcements.length) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+      window.dispatchEvent(new Event("storage"));
+    } catch {
+      /* ignore */
+    }
+    return cleaned;
+  }
+
+  return announcements;
 }
 
 export function saveAnnouncements(announcements: Announcement[]): void {
