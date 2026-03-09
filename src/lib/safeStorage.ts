@@ -19,7 +19,9 @@ function testStorage(storage: StorageLike): boolean {
 }
 
 function resolveStorage(): { backend: StorageBackend; storage: StorageLike | null } {
-  if (cachedBackend && cachedStorage !== null) return { backend: cachedBackend, storage: cachedStorage };
+  if (cachedBackend !== null && (cachedBackend === "memory" || cachedStorage !== null)) {
+    return { backend: cachedBackend, storage: cachedStorage };
+  }
 
   // Prefer localStorage when writable.
   try {
@@ -58,7 +60,7 @@ export function safeGetItem(key: string): string | null {
   try {
     return storage?.getItem(key) ?? null;
   } catch {
-    return null;
+    return memoryStore.get(key) ?? null;
   }
 }
 
@@ -72,16 +74,16 @@ export function safeSetItem(key: string, value: string): boolean {
     storage?.setItem(key, value);
     return true;
   } catch {
+    // Quota exceeded or blocked — fall back to memory
+    memoryStore.set(key, value);
     return false;
   }
 }
 
 export function safeRemoveItem(key: string): boolean {
   const { storage, backend } = resolveStorage();
-  if (backend === "memory") {
-    memoryStore.delete(key);
-    return true;
-  }
+  memoryStore.delete(key); // always clear memory copy too
+  if (backend === "memory") return true;
   try {
     storage?.removeItem(key);
     return true;

@@ -99,7 +99,7 @@ export default function Admin() {
     e.preventDefault();
     if (password === ADMIN_PASSWORD) {
       setAuthenticated(true);
-      sessionStorage.setItem("admin-auth", "true");
+      try { sessionStorage.setItem("admin-auth", "true"); } catch { /* ignore */ }
       setPasswordError("");
     } else {
       setPasswordError("Incorrect password");
