@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { BookOpen, ArrowLeft, Loader2, Search, Copy, Share2, ChevronRight, Bookmark, BookMarked } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { safeGetItem, safeSetItem } from "@/lib/safeStorage";
 
 /* ─── Types ─── */
 interface HadithItem {
@@ -56,16 +57,16 @@ const HadithCollection = () => {
   const [page, setPage] = useState(0);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Load bookmarks from localStorage
+  // Load bookmarks from storage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("hadith-bookmarks-v2");
+      const saved = safeGetItem("hadith-bookmarks-v2");
       if (saved) setBookmarks(new Set(JSON.parse(saved)));
     } catch { /* ignore */ }
   }, []);
 
   const saveBookmarks = (next: Set<string>) => {
-    localStorage.setItem("hadith-bookmarks-v2", JSON.stringify([...next]));
+    safeSetItem("hadith-bookmarks-v2", JSON.stringify([...next]));
   };
 
   const getBookmarkKey = (col: string, num: number) => `${col}:${num}`;

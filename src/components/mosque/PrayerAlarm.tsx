@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Bell, BellOff, BellRing, X, Volume2 } from "lucide-react";
 import { getActivePrayerTimes } from "@/lib/prayerStore";
+import { safeGetItem, safeSetItem } from "@/lib/safeStorage";
 import adhanAudio from "@/assets/adhan-hayya.mp3";
 
 function parseTimeTo24(time12: string): { h: number; m: number } {
@@ -22,20 +23,12 @@ const PRAYER_LABELS: Record<string, string> = {
 
 const PrayerAlarm = () => {
   const [enabled, setEnabled] = useState(() => {
-    try {
-      return localStorage.getItem("prayer-alarm-enabled") === "true";
-    } catch {
-      return false;
-    }
+    return safeGetItem("prayer-alarm-enabled") === "true";
   });
   const [alertPrayer, setAlertPrayer] = useState<string | null>(null);
   const [notifiedToday, setNotifiedToday] = useState<Set<string>>(new Set());
   const [showTooltip, setShowTooltip] = useState(() => {
-    try {
-      return !localStorage.getItem("prayer-alarm-banner-dismissed");
-    } catch {
-      return true;
-    }
+    return !safeGetItem("prayer-alarm-banner-dismissed");
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -49,7 +42,6 @@ const PrayerAlarm = () => {
     return audioRef.current;
   }, []);
 
-  // Prime/unlock audio after a user gesture (best-effort; browsers may still restrict autoplay)
   const primeAudio = useCallback(async () => {
     try {
       const audio = getAudio();
@@ -90,7 +82,7 @@ const PrayerAlarm = () => {
   const toggleAlarm = useCallback(async () => {
     if (enabled) {
       setEnabled(false);
-      localStorage.setItem("prayer-alarm-enabled", "false");
+      safeSetItem("prayer-alarm-enabled", "false");
       stopAdhan();
       return;
     }
@@ -99,23 +91,23 @@ const PrayerAlarm = () => {
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
         setEnabled(true);
-        localStorage.setItem("prayer-alarm-enabled", "true");
+        safeSetItem("prayer-alarm-enabled", "true");
         setShowTooltip(false);
-        localStorage.setItem("prayer-alarm-banner-dismissed", "true");
+        safeSetItem("prayer-alarm-banner-dismissed", "true");
         await primeAudio();
       }
     } else {
       setEnabled(true);
-      localStorage.setItem("prayer-alarm-enabled", "true");
+      safeSetItem("prayer-alarm-enabled", "true");
       setShowTooltip(false);
-      localStorage.setItem("prayer-alarm-banner-dismissed", "true");
+      safeSetItem("prayer-alarm-banner-dismissed", "true");
       await primeAudio();
     }
   }, [enabled, primeAudio, stopAdhan]);
 
   const dismissTooltip = () => {
     setShowTooltip(false);
-    localStorage.setItem("prayer-alarm-banner-dismissed", "true");
+    safeSetItem("prayer-alarm-banner-dismissed", "true");
   };
 
   useEffect(() => {
@@ -170,7 +162,6 @@ const PrayerAlarm = () => {
     <>
       {/* Side floating alarm toggle with tooltip */}
       <div className="fixed bottom-6 right-6 z-50 flex items-end gap-2">
-        {/* Tooltip / CTA beside the button */}
         {showTooltip && !enabled && (
           <div className="bg-card border border-border shadow-xl rounded-xl px-3 py-2 flex items-center gap-2 animate-in slide-in-from-right duration-300 max-w-[200px]">
             <BellRing className="w-4 h-4 text-primary shrink-0 animate-pulse" />
@@ -223,4 +214,3 @@ const PrayerAlarm = () => {
 };
 
 export default PrayerAlarm;
-

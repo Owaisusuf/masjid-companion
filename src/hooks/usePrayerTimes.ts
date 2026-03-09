@@ -35,35 +35,74 @@ function formatTo12Hour(time24: string): string {
   return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
+/**
+ * Islamic month number → English name mapping.
+ * Intl.DateTimeFormat with "islamic" calendar sometimes returns Gregorian month
+ * names on certain browsers/locales. This explicit map prevents that.
+ */
+const ISLAMIC_MONTHS_EN: Record<number, string> = {
+  1: "Muharram",
+  2: "Safar",
+  3: "Rabi al-Awwal",
+  4: "Rabi al-Thani",
+  5: "Jumada al-Ula",
+  6: "Jumada al-Thani",
+  7: "Rajab",
+  8: "Shaban",
+  9: "Ramadan",
+  10: "Shawwal",
+  11: "Dhul Qadah",
+  12: "Dhul Hijjah",
+};
+
+const ISLAMIC_MONTHS_AR: Record<number, string> = {
+  1: "مُحَرَّم",
+  2: "صَفَر",
+  3: "رَبيع الأوّل",
+  4: "رَبيع الثاني",
+  5: "جُمادى الأولى",
+  6: "جُمادى الآخرة",
+  7: "رَجَب",
+  8: "شَعْبان",
+  9: "رَمَضان",
+  10: "شَوّال",
+  11: "ذو القَعدة",
+  12: "ذو الحِجّة",
+};
+
 function getHijriFromIntl(date: Date): HijriDate | null {
   try {
-    // Force masjid timezone so the Hijri day doesn't drift for users outside India.
-    const en = new Intl.DateTimeFormat("en-u-ca-islamic", {
+    // Use numeric parts to avoid locale-dependent month name issues
+    const parts = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
       timeZone: MASJID_TIMEZONE,
-      day: "2-digit",
-      month: "long",
+      day: "numeric",
+      month: "numeric",
       year: "numeric",
     }).formatToParts(date);
 
-    const ar = new Intl.DateTimeFormat("ar-u-ca-islamic", {
-      timeZone: MASJID_TIMEZONE,
-      month: "long",
-    }).formatToParts(date);
+    const dayStr = parts.find((p) => p.type === "day")?.value;
+    const monthStr = parts.find((p) => p.type === "month")?.value;
+    const yearStr = parts.find((p) => p.type === "year")?.value;
 
-    const day = en.find((p) => p.type === "day")?.value;
-    const month = en.find((p) => p.type === "month")?.value;
-    const year = en.find((p) => p.type === "year")?.value;
-    const monthAr = ar.find((p) => p.type === "month")?.value;
+    if (!dayStr || !monthStr || !yearStr) return null;
 
-    if (!day || !month || !year || !monthAr) return null;
-    return { day, month, monthAr, year };
+    const monthNum = parseInt(monthStr, 10);
+    const monthEn = ISLAMIC_MONTHS_EN[monthNum] || monthStr;
+    const monthAr = ISLAMIC_MONTHS_AR[monthNum] || "";
+
+    return {
+      day: dayStr,
+      month: monthEn,
+      monthAr,
+      year: yearStr.replace(/\s*AH$/i, ""),
+    };
   } catch {
     return null;
   }
 }
 
 function parseMasjidDateParts() {
-  const iso = getMasjidISODate(); // YYYY-MM-DD in Asia/Kolkata
+  const iso = getMasjidISODate();
   const [yyyy, mm, dd] = iso.split("-");
   return { yyyy, mm, dd, iso };
 }
@@ -71,12 +110,9 @@ function parseMasjidDateParts() {
 async function fetchPrayerTimes(hijriDayOffset: number) {
   const { yyyy, mm, dd } = parseMasjidDateParts();
 
-  // Prayer timings are computed for the masjid location.
-  // We also pass `adjustment` to the API so Hijri offset works even on browsers
-  // that don't support Intl Islamic calendar (fallback path).
   const url =
     `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}` +
-    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0&adjustment=${hijriDayOffset}`;
+    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch prayer times");
@@ -85,15 +121,14 @@ async function fetchPrayerTimes(hijriDayOffset: number) {
   const t = data.data.timings;
   const g = data.data.date.gregorian;
 
-  // Apply Hijri offset by shifting the MASJID (Asia/Kolkata) Gregorian day, then formatting in Islamic calendar.
+  // Compute Hijri date locally with offset applied
   const baseISO = getMasjidISODate();
   const [y, m, d] = baseISO.split("-").map(Number);
-  const base = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)); // noon UTC avoids edge cases
+  const base = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
   const shifted = new Date(base);
   shifted.setUTCDate(base.getUTCDate() + hijriDayOffset);
 
   const hijri = getHijriFromIntl(shifted) ?? {
-    // Fallback to API if Intl calendar isn't supported.
     day: data.data.date.hijri.day,
     month: data.data.date.hijri.month.en,
     monthAr: data.data.date.hijri.month.ar,
@@ -131,4 +166,3 @@ export function usePrayerTimes(hijriDayOffset: number = DEFAULT_HIJRI_ADJUSTMENT
     retry: 2,
   });
 }
-

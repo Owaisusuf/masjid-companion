@@ -62,8 +62,12 @@ export default function Admin() {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
-    const session = sessionStorage.getItem("admin-auth");
-    if (session === "true") setAuthenticated(true);
+    try {
+      const session = sessionStorage.getItem("admin-auth");
+      if (session === "true") setAuthenticated(true);
+    } catch {
+      // sessionStorage blocked — require login each time
+    }
   }, []);
 
   // Sync prayer config in same tab (custom event) + other tabs (storage / broadcast reload).
@@ -95,7 +99,7 @@ export default function Admin() {
     e.preventDefault();
     if (password === ADMIN_PASSWORD) {
       setAuthenticated(true);
-      sessionStorage.setItem("admin-auth", "true");
+      try { sessionStorage.setItem("admin-auth", "true"); } catch { /* ignore */ }
       setPasswordError("");
     } else {
       setPasswordError("Incorrect password");
