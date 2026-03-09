@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { BookOpen, ArrowLeft, Loader2, Search, Copy, Share2, ChevronRight, Bookmark, BookMarked } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { safeGetItem, safeSetItem } from "@/lib/safeStorage";
 
 /* ─── Types ─── */
 interface HadithItem {
