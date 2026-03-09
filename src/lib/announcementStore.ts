@@ -1,6 +1,10 @@
-import eventImage from "@/assets/event-deeni-ijtema.jpg";
 import { getMasjidISODate } from "@/lib/localDate";
-import { emitSameTabStorageEvents, safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/safeStorage";
+import {
+  emitSameTabStorageEvents,
+  getStorageBackend,
+  safeGetItem,
+  safeSetItem,
+} from "@/lib/safeStorage";
 import { broadcastSync } from "@/lib/syncBus";
 
 export interface Announcement {
@@ -17,43 +21,39 @@ export interface Announcement {
 const STORAGE_KEY = "masjid-announcements";
 const CHANGE_EVENT = "masjid-announcements-changed";
 
-const DEFAULT_ANNOUNCEMENT: Announcement = {
-  id: "deeni-ijtema-2026",
-  title: "Deeni Ijtema — دینی اجتماع",
-  titleUrdu: "بروز اتوار بعد نماز عصر تا مغرب — جامع مسجد اولڈ برزلہ",
-  description: "Sunday, 8th March 2026 — After Asr Prayer at Jamia Masjid Old Barzallah",
-  imageUrl: eventImage,
-  startDate: "2026-03-06",
-  endDate: "2026-03-09",
-  active: true,
-};
-
-/**
- * Persist announcements to storage.
- * If payload is too large (base64 images), strips imageUrl fields and retries.
- */
 function persistAnnouncements(value: Announcement[]): boolean {
   try {
     const json = JSON.stringify(value);
     const ok = safeSetItem(STORAGE_KEY, json);
     if (ok) return true;
 
-    // Likely quota exceeded — strip base64 images (data: URLs) and retry
+    // Quota fallback: strip base64 payloads and retry with lightweight records.
     const stripped = value.map((a) => ({
       ...a,
       imageUrl: a.imageUrl.startsWith("data:") ? "" : a.imageUrl,
     }));
-    const json2 = JSON.stringify(stripped);
-    const ok2 = safeSetItem(STORAGE_KEY, json2);
-    if (ok2) {
-      console.warn("[announcements] Images stripped due to storage quota.");
-      return true;
-    }
 
-    return false;
+    return safeSetItem(STORAGE_KEY, JSON.stringify(stripped));
   } catch {
     return false;
   }
+}
+
+function normalizeAnnouncements(input: unknown): Announcement[] {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .filter((a): a is Announcement => Boolean(a && typeof a === "object"))
+    .map((a) => ({
+      id: String(a.id ?? crypto.randomUUID?.() ?? Date.now()),
+      title: String(a.title ?? ""),
+      titleUrdu: String(a.titleUrdu ?? ""),
+      description: String(a.description ?? ""),
+      imageUrl: String(a.imageUrl ?? ""),
+      startDate: String(a.startDate ?? getMasjidISODate()),
+      endDate: String(a.endDate ?? getMasjidISODate()),
+      active: Boolean(a.active),
+    }));
 }
 
 export function loadAnnouncements(): Announcement[] {
@@ -65,50 +65,44 @@ export function loadAnnouncements(): Announcement[] {
     return [];
   }
 
-  // Key exists in storage (even if value is "[]") → use it as source of truth.
-  // This prevents deleted announcements from being re-seeded.
-  if (raw !== null) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return [];
+  // No seed: avoid deleted events reappearing on refresh/devices with restricted storage.
+  if (raw === null) {
+    // Best effort initialization for persistent backends only.
+    if (getStorageBackend() !== "memory") {
+      safeSetItem(STORAGE_KEY, "[]");
     }
-
-    if (!Array.isArray(parsed)) return [];
-
-    const announcements = parsed as Announcement[];
-
-    // Auto-cleanup expired announcements
-    const today = getMasjidISODate();
-    const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
-    if (cleaned.length !== announcements.length) {
-      persistAnnouncements(cleaned);
-      emitSameTabStorageEvents(CHANGE_EVENT);
-      broadcastSync("announcements");
-      return cleaned;
-    }
-
-    return announcements;
+    return [];
   }
 
-  // No key at all → first visit, seed defaults
-  const seeded = [DEFAULT_ANNOUNCEMENT];
-  const ok = persistAnnouncements(seeded);
-  if (!ok) return [];
-  return seeded;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    safeSetItem(STORAGE_KEY, "[]");
+    return [];
+  }
+
+  const announcements = normalizeAnnouncements(parsed);
+
+  // Auto-cleanup expired announcements
+  const today = getMasjidISODate();
+  const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
+  if (cleaned.length !== announcements.length) {
+    persistAnnouncements(cleaned);
+    emitSameTabStorageEvents(CHANGE_EVENT);
+    broadcastSync("announcements");
+    return cleaned;
+  }
+
+  return cleaned;
 }
 
 export function saveAnnouncements(announcements: Announcement[]): void {
   const ok = persistAnnouncements(announcements);
 
-  if (!ok) {
-    // Last resort: save empty array so defaults don't re-seed
-    try {
-      safeSetItem(STORAGE_KEY, "[]");
-    } catch {
-      // truly blocked
-    }
+  if (!ok && getStorageBackend() !== "memory") {
+    // Last resort to avoid stale old values when write fails.
+    safeSetItem(STORAGE_KEY, "[]");
   }
 
   emitSameTabStorageEvents(CHANGE_EVENT);
@@ -133,3 +127,4 @@ export function getDefaultAnnouncement(): Announcement {
     active: true,
   };
 }
+
