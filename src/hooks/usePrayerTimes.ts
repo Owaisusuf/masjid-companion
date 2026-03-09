@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { getLocalISODate } from "@/lib/localDate";
+import { DEFAULT_HIJRI_ADJUSTMENT_INDIA } from "@/lib/hijriAdjustmentStore";
 
 const LAT = 34.0522129;
 const LNG = 74.7997336;
-
-// India (incl. Kashmir) often follows a moon-sighting calendar that can be 1 day behind computed calendars.
-// This offset keeps the Hijri date aligned with the local masjid context.
-const HIJRI_ADJUSTMENT_INDIA = -1;
 
 export interface PrayerTimesData {
   Fajr: string;
@@ -37,21 +35,20 @@ function formatTo12Hour(time24: string): string {
   return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-async function fetchPrayerTimes() {
+async function fetchPrayerTimes(hijriDateAdjustment: number) {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, "0");
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const yyyy = now.getFullYear();
 
-  const res = await fetch(
-    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${LAT}&longitude=${LNG}&method=1&school=0&adjustment=${HIJRI_ADJUSTMENT_INDIA}`
-  );
+  // NOTE: `hijriDateAdjustment` affects Hijri date only; it does NOT shift prayer timings.
+  const url =
+    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}` +
+    `?latitude=${LAT}&longitude=${LNG}&method=1&school=0&hijriDateAdjustment=${hijriDateAdjustment}`;
 
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch prayer times");
+
   const data = await res.json();
   const t = data.data.timings;
   const h = data.data.date.hijri;
@@ -81,10 +78,12 @@ async function fetchPrayerTimes() {
   };
 }
 
-export function usePrayerTimes() {
+export function usePrayerTimes(hijriDateAdjustment: number = DEFAULT_HIJRI_ADJUSTMENT_INDIA) {
+  const todayLocal = getLocalISODate();
+
   return useQuery({
-    queryKey: ["prayerTimes", todayKey(), HIJRI_ADJUSTMENT_INDIA],
-    queryFn: fetchPrayerTimes,
+    queryKey: ["prayerTimes", todayLocal, hijriDateAdjustment],
+    queryFn: () => fetchPrayerTimes(hijriDateAdjustment),
     staleTime: 1000 * 60 * 30,
     refetchInterval: 1000 * 60 * 30,
     refetchIntervalInBackground: true,

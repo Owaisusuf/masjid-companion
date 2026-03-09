@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Lock, Save, ArrowLeft, Settings, Clock, Megaphone, Plus, Trash2, Image, ToggleLeft, ToggleRight, Calendar, X } from "lucide-react";
 import { loadPrayerConfig, savePrayerConfig, getDefaultAutoTimes, type PrayerConfig } from "@/lib/prayerStore";
 import { loadAnnouncements, saveAnnouncements, getDefaultAnnouncement, type Announcement } from "@/lib/announcementStore";
+import { loadHijriAdjustment, saveHijriAdjustment } from "@/lib/hijriAdjustmentStore";
 import { toast } from "@/hooks/use-toast";
 
 
@@ -21,6 +22,7 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [config, setConfig] = useState<PrayerConfig>(loadPrayerConfig());
+  const [hijriAdjustment, setHijriAdjustment] = useState<number>(loadHijriAdjustment());
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activeTab, setActiveTab] = useState<"prayer" | "announcements">("prayer");
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -29,6 +31,16 @@ const Admin = () => {
   useEffect(() => {
     const session = sessionStorage.getItem("admin-auth");
     if (session === "true") setAuthenticated(true);
+  }, []);
+
+  useEffect(() => {
+    const sync = () => setHijriAdjustment(loadHijriAdjustment());
+    window.addEventListener("storage", sync);
+    window.addEventListener("masjid-hijri-adjustment-changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("masjid-hijri-adjustment-changed", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -215,6 +227,33 @@ const Admin = () => {
               {config.mode === "auto" && (
                 <p className="text-xs text-muted-foreground font-body mt-3">ℹ️ Asr changes from 4:45 PM to 4:50 PM on March 15th</p>
               )}
+            </div>
+
+            <div className="glass-card p-5 sm:p-6 mb-5">
+              <h2 className="font-heading text-lg font-bold text-foreground mb-2">Hijri Date Adjustment</h2>
+              <p className="text-xs text-muted-foreground font-body mb-4">
+                India/Kashmir default is <span className="font-semibold text-foreground">-1</span>. Change only if your local moon-sighting differs.
+              </p>
+
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-body text-foreground">Offset (days)</label>
+                <select
+                  value={hijriAdjustment}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setHijriAdjustment(v);
+                    saveHijriAdjustment(v);
+                    toast({ title: "Saved", description: `Hijri adjustment set to ${v}.` });
+                  }}
+                  className="h-10 px-3 rounded-lg bg-card border border-border text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  {[-2, -1, 0, 1, 2].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <button onClick={handleSavePrayer} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">

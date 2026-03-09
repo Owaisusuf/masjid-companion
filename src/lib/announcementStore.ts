@@ -1,4 +1,5 @@
 import eventImage from "@/assets/event-deeni-ijtema.jpg";
+import { getLocalISODate } from "@/lib/localDate";
 
 export interface Announcement {
   id: string;
@@ -26,12 +27,17 @@ const DEFAULT_ANNOUNCEMENT: Announcement = {
 
 export function loadAnnouncements(): Announcement[] {
   let parsed: unknown = null;
+  let storageOk = true;
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw !== null) parsed = JSON.parse(raw);
   } catch {
-    /* ignore */
+    storageOk = false;
   }
+
+  // If storage is blocked/unavailable, don't auto-seed defaults (prevents "reappearing" after delete).
+  if (!storageOk) return [];
 
   // If storage exists and is an array (even empty), treat it as the source of truth.
   // This prevents deleted announcements from being re-seeded automatically.
@@ -48,7 +54,7 @@ export function loadAnnouncements(): Announcement[] {
   }
 
   // Auto-cleanup expired announcements (runs even if popup isn't opened)
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalISODate();
   const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
   if (cleaned.length !== announcements.length) {
     try {
@@ -77,8 +83,8 @@ export function saveAnnouncements(announcements: Announcement[]): void {
 
 export function getActiveAnnouncements(): Announcement[] {
   const all = loadAnnouncements();
-  const today = new Date().toISOString().slice(0, 10);
-  return all.filter(a => a.active && a.startDate <= today && a.endDate >= today);
+  const today = getLocalISODate();
+  return all.filter((a) => a.active && a.startDate <= today && a.endDate >= today);
 }
 
 export function getDefaultAnnouncement(): Announcement {
@@ -88,8 +94,8 @@ export function getDefaultAnnouncement(): Announcement {
     titleUrdu: "",
     description: "",
     imageUrl: "",
-    startDate: new Date().toISOString().slice(0, 10),
-    endDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+    startDate: getLocalISODate(),
+    endDate: getLocalISODate(new Date(Date.now() + 7 * 86400000)),
     active: true,
   };
 }
