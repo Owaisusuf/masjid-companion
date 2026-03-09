@@ -90,9 +90,9 @@ const PrayerTimesCard = () => {
           </div>
           <div className="flex items-center gap-2 text-xs sm:text-sm">
             <span className="font-heading font-semibold text-primary">
-              17 Ramadan 1447 AH
+              {data.hijri.day} {data.hijri.month} {data.hijri.year} AH
             </span>
-            <span className="font-arabic text-accent text-sm">— رمضان</span>
+            <span className="font-arabic text-accent text-sm">— {data.hijri.monthAr}</span>
           </div>
         </div>
       ) : isLoading ? (
