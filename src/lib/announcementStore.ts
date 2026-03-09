@@ -85,9 +85,11 @@ export function loadAnnouncements(): Announcement[] {
 
   const announcements = normalizeAnnouncements(parsed);
 
-  // Auto-cleanup expired announcements
+  // Remove legacy seeded event and expired alerts.
   const today = getMasjidISODate();
-  const cleaned = announcements.filter((a) => !a?.endDate || a.endDate >= today);
+  const cleaned = announcements.filter(
+    (a) => !LEGACY_SEEDED_ANNOUNCEMENT_IDS.has(a.id) && (!a?.endDate || a.endDate >= today),
+  );
   if (cleaned.length !== announcements.length) {
     persistAnnouncements(cleaned);
     emitSameTabStorageEvents(CHANGE_EVENT);
