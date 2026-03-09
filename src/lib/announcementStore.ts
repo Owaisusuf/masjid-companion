@@ -20,6 +20,7 @@ export interface Announcement {
 
 const STORAGE_KEY = "masjid-announcements";
 const CHANGE_EVENT = "masjid-announcements-changed";
+const LEGACY_SEEDED_ANNOUNCEMENT_IDS = new Set(["deeni-ijtema-2026"]);
 
 function persistAnnouncements(value: Announcement[]): boolean {
   try {
