@@ -1,10 +1,5 @@
 import { getMasjidISODate } from "@/lib/localDate";
-import { compactStoredAnnouncements } from "@/lib/announcementStore";
-import { emitSameTabStorageEvents, safeGetItem, safeSetItem } from "@/lib/safeStorage";
-import { broadcastSync } from "@/lib/syncBus";
-
-const STORAGE_KEY = "masjid-prayer-config";
-const CHANGE_EVENT = "masjid-prayer-config-changed";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface PrayerConfig {
   mode: "auto" | "manual";
@@ -26,7 +21,6 @@ const defaultTimes: PrayerConfig["times"] = {
 };
 
 export function getDefaultAutoTimes(): PrayerConfig["times"] {
-  // Use masjid timezone to avoid off-by-one day issues for users outside India.
   const iso = getMasjidISODate();
   const [, mm, dd] = iso.split("-").map(Number);
   const month = mm;
@@ -39,42 +33,88 @@ export function getDefaultAutoTimes(): PrayerConfig["times"] {
   return { ...defaultTimes, Asr: asrTime };
 }
 
-export function loadPrayerConfig(): PrayerConfig {
+/** Fetch prayer config from the database */
+export async function fetchPrayerConfig(): Promise<PrayerConfig> {
   try {
-    const raw = safeGetItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // ignore
-  }
-  return { mode: "auto", times: { ...defaultTimes } };
-}
+    const { data, error } = await supabase
+      .from("prayer_config")
+      .select("*")
+      .eq("id", 1)
+      .single();
 
-export function savePrayerConfig(config: PrayerConfig): boolean {
-  let persisted = false;
-
-  try {
-    persisted = safeSetItem(STORAGE_KEY, JSON.stringify(config));
-  } catch {
-    persisted = false;
-  }
-
-  // If quota is full due to heavy announcement payloads, compact them and retry.
-  if (!persisted) {
-    compactStoredAnnouncements();
-    try {
-      persisted = safeSetItem(STORAGE_KEY, JSON.stringify(config));
-    } catch {
-      persisted = false;
+    if (error || !data) {
+      return { mode: "auto", times: { ...defaultTimes } };
     }
-  }
 
-  emitSameTabStorageEvents(CHANGE_EVENT);
-  broadcastSync("prayer");
-  return persisted;
+    return {
+      mode: (data.mode as "auto" | "manual") || "auto",
+      times: {
+        Fajr: data.fajr,
+        Dhuhr: data.dhuhr,
+        Asr: data.asr,
+        Maghrib: data.maghrib,
+        Isha: data.isha,
+      },
+    };
+  } catch {
+    return { mode: "auto", times: { ...defaultTimes } };
+  }
 }
 
-export function getActivePrayerTimes(): PrayerConfig["times"] {
-  const config = loadPrayerConfig();
+/** Save prayer config to the database */
+export async function savePrayerConfig(config: PrayerConfig): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("prayer_config")
+      .update({
+        mode: config.mode,
+        fajr: config.times.Fajr,
+        dhuhr: config.times.Dhuhr,
+        asr: config.times.Asr,
+        maghrib: config.times.Maghrib,
+        isha: config.times.Isha,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", 1);
+
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/** Subscribe to real-time prayer config changes */
+export function subscribeToPrayerConfig(
+  callback: (config: PrayerConfig) => void
+): () => void {
+  const channel = supabase
+    .channel("prayer_config_changes")
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "prayer_config" },
+      (payload) => {
+        const data = payload.new;
+        callback({
+          mode: (data.mode as "auto" | "manual") || "auto",
+          times: {
+            Fajr: data.fajr,
+            Dhuhr: data.dhuhr,
+            Asr: data.asr,
+            Maghrib: data.maghrib,
+            Isha: data.isha,
+          },
+        });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+/** Get active prayer times based on config */
+export function getActivePrayerTimesFromConfig(config: PrayerConfig): PrayerConfig["times"] {
   if (config.mode === "manual") return config.times;
   return getDefaultAutoTimes();
 }
