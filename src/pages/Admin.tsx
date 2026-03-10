@@ -114,17 +114,17 @@ export default function Admin() {
     setConfig((prev) => ({ ...prev, times: { ...prev.times, [key]: value } }));
   };
 
-  const handleSavePrayer = () => {
-    const persisted = savePrayerConfig(config);
+  const handleSavePrayer = async () => {
+    const persisted = await savePrayerConfig(config);
 
     if (persisted) {
-      toast({ title: "Saved", description: "Prayer settings updated." });
+      toast({ title: "Saved", description: "Prayer settings updated on all devices." });
       return;
     }
 
     toast({
-      title: "Storage full",
-      description: "Prayer times changed here but could not be saved for refresh/other browsers.",
+      title: "Error",
+      description: "Could not save prayer times. Please try again.",
       variant: "destructive",
     });
   };
