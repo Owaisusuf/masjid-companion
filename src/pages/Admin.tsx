@@ -71,15 +71,14 @@ export default function Admin() {
     }
   }, []);
 
-  // Sync prayer config in same tab (custom event) + other tabs (storage / broadcast reload).
+  // Load prayer config from database and subscribe to real-time changes
   useEffect(() => {
-    const sync = () => setConfig(loadPrayerConfig());
-    window.addEventListener("storage", sync);
-    window.addEventListener("masjid-prayer-config-changed", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("masjid-prayer-config-changed", sync);
-    };
+    fetchPrayerConfig().then((c) => {
+      setConfig(c);
+      setConfigLoaded(true);
+    });
+    const unsubscribe = subscribeToPrayerConfig((c) => setConfig(c));
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
