@@ -19,8 +19,9 @@ import {
 
 import {
   getDefaultAutoTimes,
-  loadPrayerConfig,
+  fetchPrayerConfig,
   savePrayerConfig,
+  subscribeToPrayerConfig,
   type PrayerConfig,
 } from "@/lib/prayerStore";
 import {
@@ -52,8 +53,8 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  // `config.times` ALWAYS stores the manual schedule; auto schedule is derived.
-  const [config, setConfig] = useState<PrayerConfig>(() => loadPrayerConfig());
+  const [config, setConfig] = useState<PrayerConfig>({ mode: "auto", times: getDefaultAutoTimes() });
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [hijriAdjustment, setHijriAdjustment] = useState<number>(() => loadHijriAdjustment());
 
   const [activeTab, setActiveTab] = useState<Tab>("prayer");
@@ -70,15 +71,14 @@ export default function Admin() {
     }
   }, []);
 
-  // Sync prayer config in same tab (custom event) + other tabs (storage / broadcast reload).
+  // Load prayer config from database and subscribe to real-time changes
   useEffect(() => {
-    const sync = () => setConfig(loadPrayerConfig());
-    window.addEventListener("storage", sync);
-    window.addEventListener("masjid-prayer-config-changed", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("masjid-prayer-config-changed", sync);
-    };
+    fetchPrayerConfig().then((c) => {
+      setConfig(c);
+      setConfigLoaded(true);
+    });
+    const unsubscribe = subscribeToPrayerConfig((c) => setConfig(c));
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -114,17 +114,17 @@ export default function Admin() {
     setConfig((prev) => ({ ...prev, times: { ...prev.times, [key]: value } }));
   };
 
-  const handleSavePrayer = () => {
-    const persisted = savePrayerConfig(config);
+  const handleSavePrayer = async () => {
+    const persisted = await savePrayerConfig(config);
 
     if (persisted) {
-      toast({ title: "Saved", description: "Prayer settings updated." });
+      toast({ title: "Saved", description: "Prayer settings updated on all devices." });
       return;
     }
 
     toast({
-      title: "Storage full",
-      description: "Prayer times changed here but could not be saved for refresh/other browsers.",
+      title: "Error",
+      description: "Could not save prayer times. Please try again.",
       variant: "destructive",
     });
   };

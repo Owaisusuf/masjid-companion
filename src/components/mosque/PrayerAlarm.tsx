@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Bell, BellOff, BellRing, X, Volume2 } from "lucide-react";
-import { getActivePrayerTimes } from "@/lib/prayerStore";
+import {
+  fetchPrayerConfig,
+  subscribeToPrayerConfig,
+  getActivePrayerTimesFromConfig,
+  getDefaultAutoTimes,
+  type PrayerConfig,
+} from "@/lib/prayerStore";
 import { safeGetItem, safeSetItem } from "@/lib/safeStorage";
 import adhanAudio from "@/assets/adhan-hayya.mp3";
 
@@ -30,8 +36,20 @@ const PrayerAlarm = () => {
   const [showTooltip, setShowTooltip] = useState(() => {
     return !safeGetItem("prayer-alarm-banner-dismissed");
   });
+  const [prayerTimes, setPrayerTimes] = useState(getDefaultAutoTimes());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Fetch prayer times from DB and subscribe to changes
+  useEffect(() => {
+    fetchPrayerConfig().then((config) => {
+      setPrayerTimes(getActivePrayerTimesFromConfig(config));
+    });
+    const unsubscribe = subscribeToPrayerConfig((config) => {
+      setPrayerTimes(getActivePrayerTimesFromConfig(config));
+    });
+    return unsubscribe;
+  }, []);
 
   const getAudio = useCallback(() => {
     if (!audioRef.current) {
@@ -117,11 +135,10 @@ const PrayerAlarm = () => {
       const now = new Date();
       const nowH = now.getHours();
       const nowM = now.getMinutes();
-      const prayers = getActivePrayerTimes();
 
       for (const key of PRAYER_KEYS) {
-        if (!prayers[key] || notifiedToday.has(key)) continue;
-        const { h, m } = parseTimeTo24(prayers[key]);
+        if (!prayerTimes[key] || notifiedToday.has(key)) continue;
+        const { h, m } = parseTimeTo24(prayerTimes[key]);
 
         if (nowH === h && nowM === m) {
           setAlertPrayer(key);
@@ -141,7 +158,7 @@ const PrayerAlarm = () => {
     const interval = setInterval(check, 15000);
     check();
     return () => clearInterval(interval);
-  }, [enabled, notifiedToday, playAdhan]);
+  }, [enabled, notifiedToday, playAdhan, prayerTimes]);
 
   useEffect(() => {
     const checkMidnight = () => {
@@ -160,7 +177,6 @@ const PrayerAlarm = () => {
 
   return (
     <>
-      {/* Side floating alarm toggle with tooltip */}
       <div className="fixed bottom-6 right-6 z-50 flex items-end gap-2">
         {showTooltip && !enabled && (
           <div className="bg-card border border-border shadow-xl rounded-xl px-3 py-2 flex items-center gap-2 animate-in slide-in-from-right duration-300 max-w-[200px]">
@@ -188,7 +204,6 @@ const PrayerAlarm = () => {
         </button>
       </div>
 
-      {/* Alert modal */}
       {alertPrayer && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-card rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-border animate-in fade-in zoom-in-95 duration-300">
