@@ -53,8 +53,8 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  // `config.times` ALWAYS stores the manual schedule; auto schedule is derived.
-  const [config, setConfig] = useState<PrayerConfig>(() => loadPrayerConfig());
+  const [config, setConfig] = useState<PrayerConfig>({ mode: "auto", times: getDefaultAutoTimes() });
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [hijriAdjustment, setHijriAdjustment] = useState<number>(() => loadHijriAdjustment());
 
   const [activeTab, setActiveTab] = useState<Tab>("prayer");
