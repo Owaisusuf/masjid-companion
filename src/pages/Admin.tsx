@@ -19,8 +19,9 @@ import {
 
 import {
   getDefaultAutoTimes,
-  loadPrayerConfig,
+  fetchPrayerConfig,
   savePrayerConfig,
+  subscribeToPrayerConfig,
   type PrayerConfig,
 } from "@/lib/prayerStore";
 import {

@@ -3,7 +3,13 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { useHijriAdjustment } from "@/hooks/useHijriAdjustment";
 import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar, Landmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getActivePrayerTimes } from "@/lib/prayerStore";
+import {
+  fetchPrayerConfig,
+  subscribeToPrayerConfig,
+  getActivePrayerTimesFromConfig,
+  getDefaultAutoTimes,
+  type PrayerConfig,
+} from "@/lib/prayerStore";
 
 const prayerNames = [
   { key: "Fajr", label: "Fajr", urdu: "فجر", Icon: Moon },
@@ -44,7 +50,7 @@ function getTimeUntil(time12: string): string {
 }
 
 function isJummahToday(): boolean {
-  return new Date().getDay() === 5; // Friday
+  return new Date().getDay() === 5;
 }
 
 const JUMMAH_TIME = "1:30 PM";
@@ -52,31 +58,41 @@ const JUMMAH_TIME = "1:30 PM";
 const PrayerTimesCard = () => {
   const { adjustment } = useHijriAdjustment();
   const { data, isLoading } = usePrayerTimes(adjustment);
-  const [masjidTimes, setMasjidTimes] = useState(getActivePrayerTimes());
+  const [masjidTimes, setMasjidTimes] = useState(getDefaultAutoTimes());
   const [nextPrayer, setNextPrayer] = useState<string | null>(null);
 
+  // Fetch prayer config from database on mount
   useEffect(() => {
-    const update = () => {
-      const times = getActivePrayerTimes();
+    fetchPrayerConfig().then((config) => {
+      const times = getActivePrayerTimesFromConfig(config);
       setMasjidTimes(times);
-      // Include Jummah in next prayer calculation on Fridays
       const allTimes: Record<string, string> = { ...times };
-      if (isJummahToday()) {
-        allTimes["Jummah"] = JUMMAH_TIME;
-      }
+      if (isJummahToday()) allTimes["Jummah"] = JUMMAH_TIME;
       setNextPrayer(getNextPrayer(allTimes));
-    };
-
-    update();
-    const timer = setInterval(update, 30000);
-    window.addEventListener("storage", update);
-    window.addEventListener("masjid-prayer-config-changed", update);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("storage", update);
-      window.removeEventListener("masjid-prayer-config-changed", update);
-    };
+    });
   }, []);
+
+  // Subscribe to real-time changes from database
+  useEffect(() => {
+    const unsubscribe = subscribeToPrayerConfig((config) => {
+      const times = getActivePrayerTimesFromConfig(config);
+      setMasjidTimes(times);
+      const allTimes: Record<string, string> = { ...times };
+      if (isJummahToday()) allTimes["Jummah"] = JUMMAH_TIME;
+      setNextPrayer(getNextPrayer(allTimes));
+    });
+    return unsubscribe;
+  }, []);
+
+  // Update next prayer countdown every 30s
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const allTimes: Record<string, string> = { ...masjidTimes };
+      if (isJummahToday()) allTimes["Jummah"] = JUMMAH_TIME;
+      setNextPrayer(getNextPrayer(allTimes));
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [masjidTimes]);
 
   const showJummah = isJummahToday();
 
@@ -109,7 +125,6 @@ const PrayerTimesCard = () => {
         </div>
       ) : null}
 
-      {/* Jummah banner on Fridays */}
       {showJummah && (
         <div className="glass-card glow-primary p-3 mb-3 flex items-center justify-center gap-3">
           <Landmark className="w-5 h-5 text-primary shrink-0" />
@@ -124,7 +139,6 @@ const PrayerTimesCard = () => {
         </div>
       )}
 
-      {/* Prayer cards grid */}
       <div
         className={`grid grid-cols-2 gap-2 sm:gap-3 ${showJummah ? "sm:grid-cols-6" : "sm:grid-cols-5"}`}
       >
@@ -158,7 +172,6 @@ const PrayerTimesCard = () => {
           );
         })}
 
-        {/* Jummah card - only on Fridays */}
         {showJummah && (
           <div
             className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 col-span-2 sm:col-span-1 ${
@@ -198,4 +211,3 @@ const PrayerTimesCard = () => {
 };
 
 export default PrayerTimesCard;
-
