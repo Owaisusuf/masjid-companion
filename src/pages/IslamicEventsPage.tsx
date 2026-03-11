@@ -13,11 +13,14 @@ const IslamicEventsPage = () => {
   const months = [
     { name: "Muharram", nameUrdu: "محرم", number: 1 },
     { name: "Safar", nameUrdu: "صفر", number: 2 },
-    { name: "Rabi ul Awwal", nameUrdu: "ربیع الاول", number: 3 },
+    { name: "Rabi al-Awwal", nameUrdu: "ربیع الاول", number: 3 },
+    { name: "Jumada al-Ula", nameUrdu: "جمادی الاولیٰ", number: 5 },
+    { name: "Jumada al-Thani", nameUrdu: "جمادی الثانی", number: 6 },
     { name: "Rajab", nameUrdu: "رجب", number: 7 },
     { name: "Shaban", nameUrdu: "شعبان", number: 8 },
     { name: "Ramadan", nameUrdu: "رمضان", number: 9 },
     { name: "Shawwal", nameUrdu: "شوال", number: 10 },
+    { name: "Dhul Qadah", nameUrdu: "ذوالقعدہ", number: 11 },
     { name: "Dhul Hijjah", nameUrdu: "ذوالحجہ", number: 12 },
   ];
 
