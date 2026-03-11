@@ -86,7 +86,7 @@ const PrayerTimesCard = () => {
       setMasjidTimes(times);
       const allTimes: Record<string, string> = { ...times };
       if (isJummahToday()) allTimes["Jummah"] = JUMMAH_TIME;
-      setNextPrayer(getNextPrayer(allTimes));
+      setNextPrayer(getNextPrayer(allTimes, isJummahToday()));
     });
     return unsubscribe;
   }, []);
