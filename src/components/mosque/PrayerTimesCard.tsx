@@ -27,13 +27,20 @@ function parseTimeToMinutes(time12: string): number {
   return h * 60 + m;
 }
 
-function getNextPrayer(prayers: Record<string, string>): string | null {
+function getNextPrayer(prayers: Record<string, string>, isJummah: boolean): string | null {
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const order = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+
+  // Build ordered list; on Friday insert Jummah between Fajr and Asr
+  const order: string[] = isJummah
+    ? ["Fajr", "Jummah", "Asr", "Maghrib", "Isha"]
+    : ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+
   for (const key of order) {
-    if (prayers[key] && parseTimeToMinutes(prayers[key]) > nowMinutes) return key;
+    const time = prayers[key];
+    if (time && parseTimeToMinutes(time) > nowMinutes) return key;
   }
+  // All prayers passed → next is Fajr (tomorrow)
   return "Fajr";
 }
 

@@ -34,7 +34,7 @@ const NamesOfAllah = () => {
         />
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-2.5">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-2.5" dir="rtl">
         {displayNames.map((name) => (
           <div
             key={name.number}
