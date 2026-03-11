@@ -96,7 +96,7 @@ const PrayerTimesCard = () => {
     const timer = setInterval(() => {
       const allTimes: Record<string, string> = { ...masjidTimes };
       if (isJummahToday()) allTimes["Jummah"] = JUMMAH_TIME;
-      setNextPrayer(getNextPrayer(allTimes));
+      setNextPrayer(getNextPrayer(allTimes, isJummahToday()));
     }, 30000);
     return () => clearInterval(timer);
   }, [masjidTimes]);
