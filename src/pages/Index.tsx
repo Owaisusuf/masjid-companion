@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronRight, BookMarked } from "lucide-react";
 import Navigation from "@/components/mosque/Navigation";
 import Header from "@/components/mosque/Header";
 import AnnouncementPopup from "@/components/mosque/AnnouncementPopup";
@@ -21,7 +21,7 @@ const SectionDivider = () => (
   </div>
 );
 
-const SectionLink = ({ title, titleUrdu, description, icon: Icon, to }: { title: string; titleUrdu: string; description: string; icon: typeof BookOpen; to: string }) => {
+const SectionButton = ({ title, titleUrdu, description, icon: Icon, to }: { title: string; titleUrdu: string; description: string; icon: typeof BookOpen; to: string }) => {
   const navigate = useNavigate();
   return (
     <section className="px-4 max-w-5xl mx-auto">
@@ -32,12 +32,23 @@ const SectionLink = ({ title, titleUrdu, description, icon: Icon, to }: { title:
       </div>
       <button
         onClick={() => navigate(to)}
-        className="glass-card w-full p-5 sm:p-6 flex items-center justify-between group hover:border-primary/30 transition-all text-left"
+        className="w-full glass-card p-5 sm:p-6 flex items-center justify-between group hover:border-primary/40 hover:shadow-lg transition-all text-left border-2 border-transparent hover:bg-primary/5"
       >
-        <div>
-          <p className="font-body text-sm sm:text-base text-foreground/80 leading-relaxed">{description}</p>
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+            <Icon className="w-6 h-6 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-body text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">{title}</p>
+            <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{description}</p>
+          </div>
         </div>
-        <ChevronRight className="w-6 h-6 text-primary shrink-0 ml-4 group-hover:translate-x-1 transition-transform" />
+        <div className="flex items-center gap-2 shrink-0 ml-3">
+          <span className="hidden sm:inline-block px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-body font-medium group-hover:bg-primary/90 transition-colors">
+            Open
+          </span>
+          <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+        </div>
       </button>
     </section>
   );
@@ -59,7 +70,7 @@ const Index = () => {
         <SectionDivider />
         <NamazGuide />
         <SectionDivider />
-        <SectionLink
+        <SectionButton
           title="Holy Quran"
           titleUrdu="القرآن الکریم"
           description="Read the Holy Quran with Arabic text, English and Urdu translations. Browse by Surah or Parah."
@@ -67,11 +78,11 @@ const Index = () => {
           to="/quran"
         />
         <SectionDivider />
-        <SectionLink
+        <SectionButton
           title="Hadith Collection"
           titleUrdu="مجموعۂ احادیث"
-          description="Browse authentic hadith collections including Sahih al-Bukhari, Sahih Muslim, and more with English, Arabic & Urdu translations."
-          icon={BookOpen}
+          description="Browse authentic hadith collections including Sahih al-Bukhari, Sahih Muslim, and more with translations."
+          icon={BookMarked}
           to="/hadith-collection"
         />
         <SectionDivider />

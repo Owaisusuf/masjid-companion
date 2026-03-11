@@ -51,16 +51,30 @@ const DuasSection = () => {
             </button>
 
             {expandedDua === dua.id && (
-              <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
-                <p className="font-arabic text-xl sm:text-2xl leading-[2.2] text-foreground text-center whitespace-pre-line" dir="rtl">
+              <div className="px-4 pb-5 space-y-5 border-t border-border pt-5">
+                {/* Arabic */}
+                <p
+                  className="font-arabic text-xl sm:text-2xl text-foreground text-center whitespace-pre-line"
+                  dir="rtl"
+                  style={{ lineHeight: "2.8", letterSpacing: "0.5px" }}
+                >
                   {dua.arabic}
                 </p>
+
+                {/* English */}
                 <p className="text-muted-foreground text-sm leading-relaxed italic text-center max-w-lg mx-auto">
                   "{dua.english}"
                 </p>
-                <p className="font-urdu text-sm text-muted-foreground text-center" dir="rtl">
+
+                {/* Urdu */}
+                <p
+                  className="font-urdu text-base text-foreground/80 text-center"
+                  dir="rtl"
+                  style={{ lineHeight: "2.8", wordSpacing: "2px" }}
+                >
                   {dua.urdu}
                 </p>
+
                 <div className="flex justify-center">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary border border-border text-xs text-primary font-medium">
                     📖 {dua.reference}
