@@ -106,12 +106,17 @@ const EventCard = ({ event, highlight }: { event: IslamicEvent; highlight?: bool
       <span className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 font-body ${
         highlight ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
       }`}>
-        {event.day}
+        {event.day ?? "—"}
       </span>
       <div className="flex-1 min-w-0">
         <p className="font-body text-sm font-semibold text-foreground">{event.title}</p>
         <p className="font-urdu text-sm text-accent mt-0.5" dir="rtl">{event.titleUrdu}</p>
         <p className="text-xs text-muted-foreground mt-2 leading-relaxed font-body">{event.description}</p>
+        {event.source && (
+          <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full bg-secondary border border-border text-[10px] text-primary font-medium font-body">
+            📖 {event.source}
+          </span>
+        )}
       </div>
     </div>
   </div>
