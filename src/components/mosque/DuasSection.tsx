@@ -52,7 +52,7 @@ const DuasSection = () => {
 
             {expandedDua === dua.id && (
               <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
-                <p className="font-arabic text-xl sm:text-2xl leading-[2.2] text-foreground text-center" dir="rtl">
+                <p className="font-arabic text-xl sm:text-2xl leading-[2.2] text-foreground text-center whitespace-pre-line" dir="rtl">
                   {dua.arabic}
                 </p>
                 <p className="text-muted-foreground text-sm leading-relaxed italic text-center max-w-lg mx-auto">

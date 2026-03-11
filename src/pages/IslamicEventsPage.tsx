@@ -13,11 +13,14 @@ const IslamicEventsPage = () => {
   const months = [
     { name: "Muharram", nameUrdu: "محرم", number: 1 },
     { name: "Safar", nameUrdu: "صفر", number: 2 },
-    { name: "Rabi ul Awwal", nameUrdu: "ربیع الاول", number: 3 },
+    { name: "Rabi al-Awwal", nameUrdu: "ربیع الاول", number: 3 },
+    { name: "Jumada al-Ula", nameUrdu: "جمادی الاولیٰ", number: 5 },
+    { name: "Jumada al-Thani", nameUrdu: "جمادی الثانی", number: 6 },
     { name: "Rajab", nameUrdu: "رجب", number: 7 },
     { name: "Shaban", nameUrdu: "شعبان", number: 8 },
     { name: "Ramadan", nameUrdu: "رمضان", number: 9 },
     { name: "Shawwal", nameUrdu: "شوال", number: 10 },
+    { name: "Dhul Qadah", nameUrdu: "ذوالقعدہ", number: 11 },
     { name: "Dhul Hijjah", nameUrdu: "ذوالحجہ", number: 12 },
   ];
 
@@ -103,12 +106,17 @@ const EventCard = ({ event, highlight }: { event: IslamicEvent; highlight?: bool
       <span className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 font-body ${
         highlight ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
       }`}>
-        {event.day}
+        {event.day ?? "—"}
       </span>
       <div className="flex-1 min-w-0">
         <p className="font-body text-sm font-semibold text-foreground">{event.title}</p>
         <p className="font-urdu text-sm text-accent mt-0.5" dir="rtl">{event.titleUrdu}</p>
         <p className="text-xs text-muted-foreground mt-2 leading-relaxed font-body">{event.description}</p>
+        {event.source && (
+          <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full bg-secondary border border-border text-[10px] text-primary font-medium font-body">
+            📖 {event.source}
+          </span>
+        )}
       </div>
     </div>
   </div>
