@@ -11,6 +11,7 @@ import NamazGuidePage from "./pages/NamazGuidePage";
 import IslamicEventsPage from "./pages/IslamicEventsPage";
 import HadithCollectionPage from "./pages/HadithCollectionPage";
 import QuranPage from "./pages/QuranPage";
+import QuizPage from "./pages/QuizPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => {
             <Route path="/islamic-events" element={<IslamicEventsPage />} />
             <Route path="/hadith-collection" element={<HadithCollectionPage />} />
             <Route path="/quran" element={<QuranPage />} />
+            <Route path="/islamic-quiz" element={<QuizPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

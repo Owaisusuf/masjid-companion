@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, ChevronRight, BookMarked } from "lucide-react";
+import { BookOpen, ChevronRight, BookMarked, Brain } from "lucide-react";
 import Navigation from "@/components/mosque/Navigation";
 import Header from "@/components/mosque/Header";
 import AnnouncementPopup from "@/components/mosque/AnnouncementPopup";
@@ -84,6 +84,14 @@ const Index = () => {
           description="Browse authentic hadith collections including Sahih al-Bukhari, Sahih Muslim, and more with translations."
           icon={BookMarked}
           to="/hadith-collection"
+        />
+        <SectionDivider />
+        <SectionButton
+          title="Islamic Quiz"
+          titleUrdu="اسلامی کوئز"
+          description="Test your Islamic knowledge with quizzes on Qur'an, Hadith, Seerah, and more. Track your progress and earn badges."
+          icon={Brain}
+          to="/islamic-quiz"
         />
         <SectionDivider />
         <QiblaFinder />
