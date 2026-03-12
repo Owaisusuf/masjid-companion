@@ -86,6 +86,14 @@ const Index = () => {
           to="/hadith-collection"
         />
         <SectionDivider />
+        <SectionButton
+          title="Islamic Quiz"
+          titleUrdu="اسلامی کوئز"
+          description="Test your Islamic knowledge with quizzes on Qur'an, Hadith, Seerah, and more. Track your progress and earn badges."
+          icon={Brain}
+          to="/islamic-quiz"
+        />
+        <SectionDivider />
         <QiblaFinder />
         <SectionDivider />
         <DuasSection />
