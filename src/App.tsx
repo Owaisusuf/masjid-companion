@@ -11,6 +11,7 @@ import NamazGuidePage from "./pages/NamazGuidePage";
 import IslamicEventsPage from "./pages/IslamicEventsPage";
 import HadithCollectionPage from "./pages/HadithCollectionPage";
 import QuranPage from "./pages/QuranPage";
+import QuizPage from "./pages/QuizPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
