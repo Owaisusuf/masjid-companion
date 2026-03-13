@@ -2,9 +2,9 @@ import { useState, useCallback, useRef } from "react";
 import { BookOpen, ArrowLeft, Loader2, Search, Copy, Share2, ChevronRight, Bookmark, BookMarked } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { safeGetItem, safeSetItem } from "@/lib/safeStorage";
-import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_SIZE = 20;
+const EXCLUDED_SLUGS = ["musnad-ahmad", "al-silsila-sahiha"];
 
 interface Book {
   id: number;
@@ -47,12 +47,6 @@ type View = "books" | "chapters" | "hadiths";
 
 const fetchProxy = async (params: Record<string, string>) => {
   const query = new URLSearchParams(params).toString();
-  const { data, error } = await supabase.functions.invoke("hadith-proxy", {
-    body: null,
-    method: "GET",
-    headers: {},
-  });
-  // Use fetch directly for GET with query params
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/hadith-proxy?${query}`;
   const res = await fetch(url, {
     headers: {
@@ -63,7 +57,7 @@ const fetchProxy = async (params: Record<string, string>) => {
   return res.json();
 };
 
-const HadithCollection = () => {
+const HadithCollection = ({ onExit }: { onExit?: () => void }) => {
   const [view, setView] = useState<View>("books");
   const [books, setBooks] = useState<Book[]>([]);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -113,7 +107,8 @@ const HadithCollection = () => {
       const json = await fetchProxy({ endpoint: "books" });
       const data = json.books || json.data || json;
       if (Array.isArray(data)) {
-        setBooks(data);
+        const filtered = data.filter((b: Book) => !EXCLUDED_SLUGS.includes(b.bookSlug));
+        setBooks(filtered);
         setBooksLoaded(true);
       } else throw new Error("Unexpected response format");
     } catch (e: any) {
@@ -191,6 +186,8 @@ const HadithCollection = () => {
       setView("books");
       setChapters([]);
       setSelectedBook(null);
+    } else if (view === "books" && onExit) {
+      onExit();
     }
     setError("");
   };
@@ -226,8 +223,8 @@ const HadithCollection = () => {
   return (
     <section ref={topRef} id="hadith-collection" className="px-3 sm:px-4 max-w-4xl mx-auto">
       {loading && (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground font-body">Loading...</p>
         </div>
       )}
@@ -242,24 +239,24 @@ const HadithCollection = () => {
       {/* BOOKS VIEW */}
       {view === "books" && !loading && (
         <div className="glass-card overflow-hidden">
-          <div className="gradient-primary px-4 py-5 sm:px-6 sm:py-7 text-center">
-            <BookOpen className="w-8 h-8 text-primary-foreground/80 mx-auto mb-2" />
+          <div className="gradient-primary px-4 py-5 sm:px-6 sm:py-6 text-center">
+            <BookOpen className="w-7 h-7 text-primary-foreground/80 mx-auto mb-2" />
             <h2 className="text-primary-foreground font-heading text-lg sm:text-xl font-bold">Hadith Collection</h2>
-            <p className="font-urdu text-primary-foreground/70 text-base mt-1" dir="rtl">مجموعۂ احادیث نبویہ ﷺ</p>
-            <p className="text-primary-foreground/60 text-xs sm:text-sm font-body mt-2">Arabic • English • Urdu Translations</p>
+            <p className="font-nastaleeq text-primary-foreground/70 text-base mt-1" dir="rtl">مجموعۂ احادیث نبویہ ﷺ</p>
+            <p className="text-primary-foreground/60 text-xs font-body mt-1">Arabic • English • Urdu Translations</p>
           </div>
-          <div className="p-4 sm:p-6">
-            <p className="text-center text-xs sm:text-sm text-muted-foreground font-body mb-5">Select a Hadith book to start reading</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="p-3 sm:p-5">
+            <p className="text-center text-xs text-muted-foreground font-body mb-4">Select a Hadith book to start reading</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               {books.map((book) => (
-                <button key={book.id} onClick={() => loadChapters(book)} className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all text-left">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <BookMarked className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                <button key={book.id} onClick={() => loadChapters(book)} className="group flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all text-left">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <BookMarked className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">{book.bookName}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground/70 font-body mt-0.5">{book.writerName}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground/50 font-body mt-0.5">{Number(book.hadiths_count)?.toLocaleString()} hadiths • {book.chapters_count} chapters</p>
+                    <p className="font-body text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{book.bookName}</p>
+                    <p className="text-[10px] text-muted-foreground/70 font-body mt-0.5">{book.writerName}</p>
+                    <p className="text-[10px] text-muted-foreground/50 font-body">{Number(book.hadiths_count)?.toLocaleString()} hadiths • {book.chapters_count} chapters</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary mt-1 shrink-0 transition-colors" />
                 </button>
@@ -272,7 +269,7 @@ const HadithCollection = () => {
       {/* CHAPTERS VIEW */}
       {view === "chapters" && !loading && selectedBook && (
         <div className="glass-card overflow-hidden">
-          <div className="gradient-primary px-4 py-4 sm:px-6 sm:py-5">
+          <div className="gradient-primary px-4 py-3 sm:px-6 sm:py-4">
             <div className="flex items-center gap-3">
               <button onClick={goBack} className="p-2 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors shrink-0">
                 <ArrowLeft className="w-4 h-4" />
@@ -283,7 +280,7 @@ const HadithCollection = () => {
               </div>
             </div>
           </div>
-          <div className="px-4 py-3 sm:px-6 border-b border-border">
+          <div className="px-3 py-2.5 sm:px-5 border-b border-border">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
@@ -294,19 +291,21 @@ const HadithCollection = () => {
           </div>
           <div className="divide-y divide-border/30 max-h-[65vh] overflow-y-auto">
             {chapters.map((ch) => (
-              <button key={ch.id} onClick={() => selectChapter(ch)} className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 hover:bg-secondary/40 transition-colors text-left group">
+              <button key={ch.id} onClick={() => selectChapter(ch)} className="w-full flex items-center justify-between px-3 sm:px-5 py-3 hover:bg-secondary/40 transition-colors text-left group">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 font-body">{ch.chapterNumber}</span>
-                  <div className="min-w-0">
-                    <p className="font-body text-sm sm:text-base text-foreground font-medium group-hover:text-primary transition-colors line-clamp-2">{ch.chapterEnglish}</p>
-                    {ch.chapterUrdu && <p className="font-urdu text-xs text-muted-foreground mt-1 line-clamp-1" dir="rtl">{ch.chapterUrdu}</p>}
+                  <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 font-body">{ch.chapterNumber}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-body text-sm text-foreground font-semibold group-hover:text-primary transition-colors leading-relaxed">{ch.chapterEnglish}</p>
+                    {ch.chapterUrdu && (
+                      <p className="font-nastaleeq text-sm text-muted-foreground mt-1.5" dir="rtl" style={{ lineHeight: "2.4" }}>{ch.chapterUrdu}</p>
+                    )}
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0 ml-2" />
               </button>
             ))}
           </div>
-          <div className="px-4 py-3 bg-secondary/20 border-t border-border text-center">
+          <div className="px-4 py-2.5 bg-secondary/20 border-t border-border text-center">
             <p className="text-[10px] text-muted-foreground/60 font-body">{chapters.length} chapters</p>
           </div>
         </div>
@@ -314,9 +313,9 @@ const HadithCollection = () => {
 
       {/* HADITHS VIEW */}
       {view === "hadiths" && !loading && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="glass-card overflow-hidden">
-            <div className="gradient-primary px-4 py-3 sm:px-6 flex items-center gap-2 text-xs text-primary-foreground/80 font-body flex-wrap">
+            <div className="gradient-primary px-3 py-2.5 sm:px-5 flex items-center gap-2 text-xs text-primary-foreground/80 font-body flex-wrap">
               <button onClick={() => { setView("books"); setSelectedBook(null); setChapters([]); setHadiths([]); setError(""); setSearchQuery(""); }} className="hover:text-primary-foreground transition-colors whitespace-nowrap">Books</button>
               <ChevronRight className="w-3 h-3 shrink-0" />
               <button onClick={goBack} className="hover:text-primary-foreground transition-colors truncate max-w-[120px] sm:max-w-none">{selectedBook?.bookName}</button>
@@ -327,7 +326,7 @@ const HadithCollection = () => {
                 </>
               )}
             </div>
-            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-secondary/30 flex items-center gap-3">
+            <div className="px-3 py-2.5 sm:px-5 sm:py-3 bg-secondary/30 flex items-center gap-3">
               <button onClick={goBack} className="p-2 rounded-lg border border-border bg-card hover:bg-secondary transition-colors shrink-0">
                 <ArrowLeft className="w-4 h-4 text-primary" />
               </button>
@@ -340,9 +339,9 @@ const HadithCollection = () => {
 
           {hadiths.map((h) => (
             <div key={h.id} className="glass-card overflow-hidden">
-              <div className="flex items-center justify-between px-4 sm:px-6 py-3 bg-primary/5 border-b border-border/30">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-xs font-bold font-body shrink-0">{h.hadithNumber}</span>
+              <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 bg-primary/5 border-b border-border/30">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-bold font-body shrink-0">{h.hadithNumber}</span>
                   <div>
                     <span className="text-xs text-muted-foreground font-body">{h.book?.bookName || selectedBook?.bookName}</span>
                     {h.status && (
@@ -354,46 +353,46 @@ const HadithCollection = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => toggleBookmark(h)} className={`p-2 rounded-lg hover:bg-secondary transition-colors ${isBookmarked(h) ? "text-accent" : "text-muted-foreground/40"}`}>
+                <div className="flex items-center gap-0.5">
+                  <button onClick={() => toggleBookmark(h)} className={`p-1.5 rounded-lg hover:bg-secondary transition-colors ${isBookmarked(h) ? "text-accent" : "text-muted-foreground/40"}`}>
                     <Bookmark className="w-4 h-4" fill={isBookmarked(h) ? "currentColor" : "none"} />
                   </button>
-                  <button onClick={() => copyHadith(h)} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground/40 hover:text-primary transition-colors"><Copy className="w-4 h-4" /></button>
-                  <button onClick={() => shareHadith(h)} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground/40 hover:text-primary transition-colors"><Share2 className="w-4 h-4" /></button>
+                  <button onClick={() => copyHadith(h)} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground/40 hover:text-primary transition-colors"><Copy className="w-4 h-4" /></button>
+                  <button onClick={() => shareHadith(h)} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground/40 hover:text-primary transition-colors"><Share2 className="w-4 h-4" /></button>
                 </div>
               </div>
               {h.hadithArabic && (
-                <div className="px-4 sm:px-6 py-5 sm:py-6 bg-primary/[0.03] border-b border-border/20">
-                  <p className="font-arabic text-lg sm:text-xl text-foreground/90 text-right" dir="rtl" style={{ lineHeight: "2.6" }}>{stripHtml(h.hadithArabic)}</p>
+                <div className="px-3 sm:px-5 py-4 sm:py-5 bg-primary/[0.03] border-b border-border/20">
+                  <p className="font-nastaleeq text-lg sm:text-xl text-foreground/90 text-right" dir="rtl" style={{ lineHeight: "2.8" }}>{stripHtml(h.hadithArabic)}</p>
                 </div>
               )}
               {h.hadithEnglish && (
-                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-border/20">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-body font-semibold mb-2">English</p>
-                  {h.englishNarrator && <p className="text-sm font-body font-semibold text-primary mb-2" style={{ lineHeight: "1.8" }}>{stripHtml(h.englishNarrator)}</p>}
-                  <p className="text-sm sm:text-base text-foreground/85 font-body" style={{ lineHeight: "2" }}>{stripHtml(h.hadithEnglish)}</p>
+                <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-border/20">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-body font-semibold mb-1.5">English</p>
+                  {h.englishNarrator && <p className="text-sm font-body font-semibold text-primary mb-1.5" style={{ lineHeight: "1.8" }}>{stripHtml(h.englishNarrator)}</p>}
+                  <p className="text-sm sm:text-base text-foreground/85 font-body" style={{ lineHeight: "1.9" }}>{stripHtml(h.hadithEnglish)}</p>
                 </div>
               )}
               {h.hadithUrdu && (
-                <div className="px-4 sm:px-6 py-5 sm:py-6 bg-accent/[0.04]">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-body font-semibold mb-3 text-right">اردو ترجمہ</p>
-                  <p className="font-urdu text-base sm:text-lg text-foreground/85 text-right" dir="rtl" style={{ lineHeight: "3", wordSpacing: "2px" }}>{stripHtml(h.hadithUrdu)}</p>
+                <div className="px-3 sm:px-5 py-4 sm:py-5 bg-accent/[0.04]">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-body font-semibold mb-2 text-right">اردو ترجمہ</p>
+                  <p className="font-nastaleeq text-base sm:text-lg text-foreground/85 text-right" dir="rtl" style={{ lineHeight: "3.2", wordSpacing: "3px" }}>{stripHtml(h.hadithUrdu)}</p>
                 </div>
               )}
             </div>
           ))}
 
           {hadiths.length === 0 && !error && (
-            <div className="glass-card p-10 text-center">
+            <div className="glass-card p-8 text-center">
               <p className="text-muted-foreground text-sm font-body">No hadiths found.</p>
             </div>
           )}
 
           {totalPages > 1 && (
-            <div className="glass-card flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-              <button onClick={() => loadHadiths(selectedBook!.bookSlug, selectedChapter || undefined, currentPage - 1, searchQuery || undefined)} disabled={currentPage <= 1} className="px-4 py-2 rounded-lg bg-card border border-border text-sm font-body text-foreground disabled:opacity-30 hover:bg-secondary/50 transition-colors">← Previous</button>
-              <span className="text-xs sm:text-sm text-muted-foreground font-body">Page {currentPage} of {totalPages}</span>
-              <button onClick={() => loadHadiths(selectedBook!.bookSlug, selectedChapter || undefined, currentPage + 1, searchQuery || undefined)} disabled={currentPage >= totalPages} className="px-4 py-2 rounded-lg bg-card border border-border text-sm font-body text-foreground disabled:opacity-30 hover:bg-secondary/50 transition-colors">Next →</button>
+            <div className="glass-card flex items-center justify-between px-3 py-2.5 sm:px-5 sm:py-3">
+              <button onClick={() => loadHadiths(selectedBook!.bookSlug, selectedChapter || undefined, currentPage - 1, searchQuery || undefined)} disabled={currentPage <= 1} className="px-3 py-2 rounded-lg bg-card border border-border text-sm font-body text-foreground disabled:opacity-30 hover:bg-secondary/50 transition-colors">← Prev</button>
+              <span className="text-xs text-muted-foreground font-body">Page {currentPage} of {totalPages}</span>
+              <button onClick={() => loadHadiths(selectedBook!.bookSlug, selectedChapter || undefined, currentPage + 1, searchQuery || undefined)} disabled={currentPage >= totalPages} className="px-3 py-2 rounded-lg bg-card border border-border text-sm font-body text-foreground disabled:opacity-30 hover:bg-secondary/50 transition-colors">Next →</button>
             </div>
           )}
         </div>
