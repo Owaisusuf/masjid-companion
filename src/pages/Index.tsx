@@ -16,7 +16,7 @@ import IslamicEvents from "@/components/mosque/IslamicEvents";
 import NamazGuide from "@/components/mosque/NamazGuide";
 
 const SectionDivider = () => (
-  <div className="flex items-center justify-center py-3">
+  <div className="flex items-center justify-center py-1">
     <div className="arch-divider" />
   </div>
 );
@@ -32,15 +32,15 @@ const SectionButton = ({ title, titleUrdu, description, icon: Icon, to }: { titl
       </div>
       <button
         onClick={() => navigate(to)}
-        className="w-full glass-card p-5 sm:p-6 flex items-center justify-between group hover:border-primary/40 hover:shadow-lg transition-all text-left border-2 border-transparent hover:bg-primary/5"
+        className="w-full glass-card p-4 sm:p-5 flex items-center justify-between group hover:border-primary/40 hover:shadow-lg transition-all text-left border-2 border-transparent hover:bg-primary/5"
       >
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <Icon className="w-6 h-6 text-primary" />
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+            <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           </div>
           <div className="min-w-0">
             <p className="font-body text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors">{title}</p>
-            <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{description}</p>
+            <p className="font-body text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{description}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -59,7 +59,7 @@ const Index = () => {
     <main className="min-h-screen bg-background islamic-pattern">
       <Navigation />
       <Header />
-      <div className="space-y-6 sm:space-y-7 py-6 sm:py-8">
+      <div className="space-y-4 sm:space-y-5 py-4 sm:py-6">
         <PrayerTimesCard />
         <SectionDivider />
         <RamadanSchedule />
@@ -73,7 +73,7 @@ const Index = () => {
         <SectionButton
           title="Holy Quran"
           titleUrdu="القرآن الکریم"
-          description="Read the Holy Quran with Arabic text, English and Urdu translations. Browse by Surah or Parah."
+          description="Read the Holy Quran with Arabic text, English and Urdu translations."
           icon={BookOpen}
           to="/quran"
         />
@@ -81,7 +81,7 @@ const Index = () => {
         <SectionButton
           title="Hadith Collection"
           titleUrdu="مجموعۂ احادیث"
-          description="Browse authentic hadith collections including Sahih al-Bukhari, Sahih Muslim, and more with translations."
+          description="Browse authentic hadith collections with Arabic, English & Urdu translations."
           icon={BookMarked}
           to="/hadith-collection"
         />
@@ -89,7 +89,7 @@ const Index = () => {
         <SectionButton
           title="Islamic Quiz"
           titleUrdu="اسلامی کوئز"
-          description="Test your Islamic knowledge with quizzes on Qur'an, Hadith, Seerah, and more. Track your progress and earn badges."
+          description="Test your Islamic knowledge and earn badges across 10 categories."
           icon={Brain}
           to="/islamic-quiz"
         />

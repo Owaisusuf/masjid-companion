@@ -20,10 +20,15 @@ const prayerNames = [
 ];
 
 function parseTimeToMinutes(time12: string): number {
-  const [time, period] = time12.split(" ");
-  let [h, m] = time.split(":").map(Number);
-  if (period === "PM" && h !== 12) h += 12;
-  if (period === "AM" && h === 12) h = 0;
+  if (!time12 || typeof time12 !== "string") return -1;
+  const parts = time12.trim().split(" ");
+  if (parts.length < 2) return -1;
+  const [time, period] = parts;
+  const timeParts = time.split(":").map(Number);
+  if (timeParts.length < 2 || isNaN(timeParts[0]) || isNaN(timeParts[1])) return -1;
+  let [h, m] = timeParts;
+  if (period?.toUpperCase() === "PM" && h !== 12) h += 12;
+  if (period?.toUpperCase() === "AM" && h === 12) h = 0;
   return h * 60 + m;
 }
 
@@ -31,25 +36,27 @@ function getNextPrayer(prayers: Record<string, string>, isJummah: boolean): stri
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // Build ordered list; on Friday insert Jummah between Fajr and Asr
   const order: string[] = isJummah
     ? ["Fajr", "Jummah", "Asr", "Maghrib", "Isha"]
     : ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
   for (const key of order) {
     const time = prayers[key];
-    if (time && parseTimeToMinutes(time) > nowMinutes) return key;
+    if (!time) continue;
+    const mins = parseTimeToMinutes(time);
+    if (mins < 0) continue;
+    if (mins > nowMinutes) return key;
   }
-  // All prayers passed → next is Fajr (tomorrow)
   return "Fajr";
 }
 
 function getTimeUntil(time12: string): string {
+  const targetMinutes = parseTimeToMinutes(time12);
+  if (targetMinutes < 0) return "";
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  let targetMinutes = parseTimeToMinutes(time12);
-  if (targetMinutes <= nowMinutes) targetMinutes += 24 * 60;
-  const diff = targetMinutes - nowMinutes;
+  let diff = targetMinutes - nowMinutes;
+  if (diff <= 0) diff += 24 * 60;
   const h = Math.floor(diff / 60);
   const m = diff % 60;
   if (h === 0) return `${m}m`;
@@ -68,7 +75,6 @@ const PrayerTimesCard = () => {
   const [masjidTimes, setMasjidTimes] = useState(getDefaultAutoTimes());
   const [nextPrayer, setNextPrayer] = useState<string | null>(null);
 
-  // Fetch prayer config from database on mount
   useEffect(() => {
     fetchPrayerConfig().then((config) => {
       const times = getActivePrayerTimesFromConfig(config);
@@ -79,7 +85,6 @@ const PrayerTimesCard = () => {
     });
   }, []);
 
-  // Subscribe to real-time changes from database
   useEffect(() => {
     const unsubscribe = subscribeToPrayerConfig((config) => {
       const times = getActivePrayerTimesFromConfig(config);
@@ -91,7 +96,6 @@ const PrayerTimesCard = () => {
     return unsubscribe;
   }, []);
 
-  // Update next prayer countdown every 30s
   useEffect(() => {
     const timer = setInterval(() => {
       const allTimes: Record<string, string> = { ...masjidTimes };
@@ -102,6 +106,7 @@ const PrayerTimesCard = () => {
   }, [masjidTimes]);
 
   const showJummah = isJummahToday();
+  const jummahIsNext = nextPrayer === "Jummah";
 
   return (
     <section id="prayers" className="px-4 max-w-5xl mx-auto">
@@ -112,7 +117,7 @@ const PrayerTimesCard = () => {
       </div>
 
       {data?.gregorian && data?.hijri ? (
-        <div className="glass-card p-3 sm:p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="glass-card p-3 sm:p-4 mb-3 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs sm:text-sm">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
             <span className="font-heading font-semibold text-foreground">
@@ -127,38 +132,48 @@ const PrayerTimesCard = () => {
           </div>
         </div>
       ) : isLoading ? (
-        <div className="glass-card p-4 mb-4">
+        <div className="glass-card p-4 mb-3">
           <Skeleton className="h-6 w-64 mx-auto" />
         </div>
       ) : null}
 
+      {/* Jummah banner - only shown on Friday, highlighted when next */}
       {showJummah && (
-        <div className="glass-card glow-primary p-3 mb-3 flex items-center justify-center gap-3">
-          <Landmark className="w-5 h-5 text-primary shrink-0" />
+        <div className={`glass-card p-3 mb-3 flex items-center justify-center gap-3 transition-all ${
+          jummahIsNext ? "glow-primary ring-1 ring-primary/30 bg-primary/10 border-primary/30" : ""
+        }`}>
+          <Landmark className={`w-5 h-5 shrink-0 ${jummahIsNext ? "text-primary" : "text-accent"}`} />
           <div className="text-center">
             <p className="font-heading text-sm font-bold text-foreground">
               Jummah Mubarak — <span className="font-urdu text-accent">جمعہ مبارک</span>
             </p>
             <p className="text-xs text-muted-foreground font-body">
-              Jummah Prayer: <span className="font-semibold text-primary">{JUMMAH_TIME}</span>
+              Jummah Prayer: <span className={`font-semibold ${jummahIsNext ? "text-primary" : "text-foreground"}`}>{JUMMAH_TIME}</span>
+              {jummahIsNext && (
+                <span className="text-primary font-medium ml-2 animate-pulse-glow">
+                  Next • {getTimeUntil(JUMMAH_TIME)}
+                </span>
+              )}
             </p>
           </div>
         </div>
       )}
 
-      <div
-        className={`grid grid-cols-2 gap-2 sm:gap-3 ${showJummah ? "sm:grid-cols-6" : "sm:grid-cols-5"}`}
-      >
+      {/* Prayer grid - always 5 columns, no Jummah card */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-5">
         {prayerNames.map((p) => {
-          const isNext = nextPrayer === p.key;
+          // On Friday, skip highlighting Dhuhr if Jummah is next
+          const isNext = nextPrayer === p.key && !(showJummah && jummahIsNext && p.key === "Dhuhr");
           const IconComp = p.Icon;
           const time = masjidTimes[p.key as keyof typeof masjidTimes];
+          const timeUntil = isNext && time ? getTimeUntil(time) : "";
+
           return (
             <div
               key={p.key}
               className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 ${
                 isNext ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]" : "hover:shadow-md"
-              } ${p.key === "Isha" && !showJummah ? "col-span-2 sm:col-span-1" : ""}`}
+              } ${p.key === "Isha" ? "col-span-2 sm:col-span-1" : ""}`}
             >
               <IconComp
                 className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${isNext ? "text-primary" : "text-accent"}`}
@@ -168,46 +183,16 @@ const PrayerTimesCard = () => {
               </p>
               <p className="font-heading font-semibold text-foreground text-xs mb-1">{p.label}</p>
               <p className={`font-body font-bold text-base sm:text-lg ${isNext ? "text-primary" : "text-foreground"}`}>
-                {time}
+                {time || "—"}
               </p>
-              {isNext && (
+              {isNext && timeUntil && (
                 <p className="text-[10px] text-primary font-body font-medium mt-1 animate-pulse-glow">
-                  Next • {getTimeUntil(time)}
+                  Next • {timeUntil}
                 </p>
               )}
             </div>
           );
         })}
-
-        {showJummah && (
-          <div
-            className={`glass-card p-3 sm:p-4 text-center transition-all duration-300 col-span-2 sm:col-span-1 ${
-              nextPrayer === "Jummah"
-                ? "prayer-highlight glow-primary ring-1 ring-primary/30 scale-[1.02]"
-                : "hover:shadow-md border-primary/20"
-            }`}
-          >
-            <Landmark
-              className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1.5 ${nextPrayer === "Jummah" ? "text-primary" : "text-accent"}`}
-            />
-            <p className="font-urdu text-[10px] sm:text-xs text-muted-foreground mb-0.5" dir="rtl">
-              جمعہ
-            </p>
-            <p className="font-heading font-semibold text-foreground text-xs mb-1">Jummah</p>
-            <p
-              className={`font-body font-bold text-base sm:text-lg ${
-                nextPrayer === "Jummah" ? "text-primary" : "text-foreground"
-              }`}
-            >
-              {JUMMAH_TIME}
-            </p>
-            {nextPrayer === "Jummah" && (
-              <p className="text-[10px] text-primary font-body font-medium mt-1 animate-pulse-glow">
-                Next • {getTimeUntil(JUMMAH_TIME)}
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       <p className="text-center text-[10px] text-muted-foreground/50 mt-3 font-body">
