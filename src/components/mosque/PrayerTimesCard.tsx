@@ -3,6 +3,7 @@ import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { useHijriAdjustment } from "@/hooks/useHijriAdjustment";
 import { Clock, Moon, Sun, CloudSun, Sunset, Star, Calendar, Landmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MASJID_TIMEZONE } from "@/lib/localDate";
 import {
   fetchPrayerConfig,
   subscribeToPrayerConfig,
@@ -32,9 +33,22 @@ function parseTimeToMinutes(time12: string): number {
   return h * 60 + m;
 }
 
-function getNextPrayer(prayers: Record<string, string>, isJummah: boolean): string | null {
+/** Get current minutes in the masjid's timezone (IST) */
+function getNowMinutesMasjid(): number {
   const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: MASJID_TIMEZONE,
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+  const h = parseInt(parts.find(p => p.type === "hour")?.value || "0", 10);
+  const m = parseInt(parts.find(p => p.type === "minute")?.value || "0", 10);
+  return h * 60 + m;
+}
+
+function getNextPrayer(prayers: Record<string, string>, isJummah: boolean): string | null {
+  const nowMinutes = getNowMinutesMasjid();
 
   const order: string[] = isJummah
     ? ["Fajr", "Jummah", "Asr", "Maghrib", "Isha"]
@@ -53,8 +67,7 @@ function getNextPrayer(prayers: Record<string, string>, isJummah: boolean): stri
 function getTimeUntil(time12: string): string {
   const targetMinutes = parseTimeToMinutes(time12);
   if (targetMinutes < 0) return "";
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowMinutes = getNowMinutesMasjid();
   let diff = targetMinutes - nowMinutes;
   if (diff <= 0) diff += 24 * 60;
   const h = Math.floor(diff / 60);
@@ -73,7 +86,12 @@ const PrayerTimesCard = () => {
   const { adjustment } = useHijriAdjustment();
   const { data, isLoading } = usePrayerTimes(adjustment);
   const [masjidTimes, setMasjidTimes] = useState(getDefaultAutoTimes());
-  const [nextPrayer, setNextPrayer] = useState<string | null>(null);
+  const [nextPrayer, setNextPrayer] = useState<string | null>(() => {
+    const times = getDefaultAutoTimes();
+    const allTimes: Record<string, string> = { ...times };
+    if (isJummahToday()) allTimes["Jummah"] = JUMMAH_TIME;
+    return getNextPrayer(allTimes, isJummahToday());
+  });
 
   useEffect(() => {
     fetchPrayerConfig().then((config) => {

@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;700&family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
+@font-face {
+  font-family: 'IndoPak Nastaleeq';
+  src: url('https://static-cdn.tarteel.ai/qul/fonts/nastaleeq/Hanafi/normal-v4.2.2/with-waqf-lazmi/font.woff2') format('woff2'),
+       url('https://static-cdn.tarteel.ai/qul/fonts/nastaleeq/Hanafi/normal-v4.2.2/with-waqf-lazmi/font.ttf') format('truetype');
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -67,7 +74,7 @@
   }
 
   .font-nastaleeq {
-    font-family: 'Noto Nastaliq Urdu', 'Amiri', serif;
+    font-family: 'IndoPak Nastaleeq', 'Noto Nastaliq Urdu', 'Amiri', serif;
     line-height: 2.6;
   }
 }
