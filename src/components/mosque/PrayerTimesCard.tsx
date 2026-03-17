@@ -42,9 +42,10 @@ function getNowMinutesMasjid(): number {
     timeZone: MASJID_TIMEZONE,
     hour: "numeric",
     minute: "numeric",
-    hour12: false,
+    hourCycle: "h23",
   }).formatToParts(now);
-  const h = parseInt(parts.find(p => p.type === "hour")?.value || "0", 10);
+  let h = parseInt(parts.find(p => p.type === "hour")?.value || "0", 10);
+  if (h === 24) h = 0; // Some browsers return 24 for midnight
   const m = parseInt(parts.find(p => p.type === "minute")?.value || "0", 10);
   return h * 60 + m;
 }

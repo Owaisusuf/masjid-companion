@@ -27,7 +27,7 @@ const ENGLISH_EDITIONS = [
   { key: "en.pickthall", label: "Pickthall" },
 ];
 
-
+const LINES_PER_PAGE = 15;
 
 const QuranBrowser = () => {
   const [surahs, setSurahs] = useState<Surah[]>([]);
