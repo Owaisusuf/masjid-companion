@@ -41,8 +41,8 @@ const QuranBrowser = () => {
   const [search, setSearch] = useState("");
   const [selectedJuz, setSelectedJuz] = useState<number | null>(null);
   const [selectedEnglish, setSelectedEnglish] = useState(ENGLISH_EDITIONS[0].key);
-  // Track the current content source for re-fetching on translation change
   const [currentSource, setCurrentSource] = useState<{ id: number; type: "surah" | "juz" } | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     fetch(`${ALQURAN_API}/surah`)
