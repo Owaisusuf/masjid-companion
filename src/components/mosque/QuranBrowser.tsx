@@ -83,6 +83,7 @@ const QuranBrowser = () => {
     setSelectedSurah(surah);
     setSelectedJuz(null);
     setCurrentSource({ id: surah.number, type: "surah" });
+    setCurrentPage(0);
     setLoading(true);
     try {
       const { arabic, english, urdu } = await fetchVerses(surah.number, "surah", selectedEnglish);
@@ -99,6 +100,7 @@ const QuranBrowser = () => {
     setSelectedJuz(juzNumber);
     setSelectedSurah(null);
     setCurrentSource({ id: juzNumber, type: "juz" });
+    setCurrentPage(0);
     setLoading(true);
     try {
       const { arabic, english, urdu } = await fetchVerses(juzNumber, "juz", selectedEnglish);
