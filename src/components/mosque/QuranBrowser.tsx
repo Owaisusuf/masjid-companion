@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked, ChevronLeft } from "lucide-react";
 import { juzSurahMap } from "@/data/juz-surah-map";
 
 interface Surah {
