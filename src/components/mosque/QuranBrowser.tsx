@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { BookOpen, ChevronRight, ArrowLeft, Loader2, Search, Languages, BookMarked, ChevronLeft } from "lucide-react";
 import { juzSurahMap } from "@/data/juz-surah-map";
 
 interface Surah {
@@ -27,7 +27,7 @@ const ENGLISH_EDITIONS = [
   { key: "en.pickthall", label: "Pickthall" },
 ];
 
-
+const LINES_PER_PAGE = 15;
 
 const QuranBrowser = () => {
   const [surahs, setSurahs] = useState<Surah[]>([]);
@@ -41,8 +41,8 @@ const QuranBrowser = () => {
   const [search, setSearch] = useState("");
   const [selectedJuz, setSelectedJuz] = useState<number | null>(null);
   const [selectedEnglish, setSelectedEnglish] = useState(ENGLISH_EDITIONS[0].key);
-  // Track the current content source for re-fetching on translation change
   const [currentSource, setCurrentSource] = useState<{ id: number; type: "surah" | "juz" } | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     fetch(`${ALQURAN_API}/surah`)
@@ -83,6 +83,7 @@ const QuranBrowser = () => {
     setSelectedSurah(surah);
     setSelectedJuz(null);
     setCurrentSource({ id: surah.number, type: "surah" });
+    setCurrentPage(0);
     setLoading(true);
     try {
       const { arabic, english, urdu } = await fetchVerses(surah.number, "surah", selectedEnglish);
@@ -99,6 +100,7 @@ const QuranBrowser = () => {
     setSelectedJuz(juzNumber);
     setSelectedSurah(null);
     setCurrentSource({ id: juzNumber, type: "juz" });
+    setCurrentPage(0);
     setLoading(true);
     try {
       const { arabic, english, urdu } = await fetchVerses(juzNumber, "juz", selectedEnglish);
@@ -143,6 +145,11 @@ const QuranBrowser = () => {
   };
 
   const isReading = selectedSurah || selectedJuz;
+
+  const totalPages = Math.ceil(arabicVerses.length / LINES_PER_PAGE);
+  const pagedArabic = arabicVerses.slice(currentPage * LINES_PER_PAGE, (currentPage + 1) * LINES_PER_PAGE);
+  const pagedEnglish = englishVerses.slice(currentPage * LINES_PER_PAGE, (currentPage + 1) * LINES_PER_PAGE);
+  const pagedUrdu = urduVerses.slice(currentPage * LINES_PER_PAGE, (currentPage + 1) * LINES_PER_PAGE);
 
   return (
     <section id="quran" className="px-4 max-w-5xl mx-auto">
@@ -302,38 +309,84 @@ const QuranBrowser = () => {
               <p className="text-xs text-muted-foreground font-body">Loading Quran data...</p>
             </div>
           ) : (
-            <div className="space-y-5 max-h-[600px] overflow-y-auto pr-1">
-              {arabicVerses.map((ayah, i) => {
-                const engText = englishVerses[i]?.text;
-                const urduText = urduVerses[i]?.text;
-                return (
-                  <div key={`${ayah.number}`} className="p-4 sm:p-5 rounded-xl bg-secondary/40 border border-border/50">
-                    {/* Verse number */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0 font-body">
-                        {ayah.numberInSurah}
-                      </span>
+            <>
+              {/* Page info */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground font-body">
+                  <span>Page {currentPage + 1} of {totalPages}</span>
+                  <span>{LINES_PER_PAGE} verses per page</span>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {pagedArabic.map((ayah, i) => {
+                  const engText = pagedEnglish[i]?.text;
+                  const urduText = pagedUrdu[i]?.text;
+                  return (
+                    <div key={`${ayah.number}`} className="p-3 sm:p-4 rounded-xl bg-secondary/40 border border-border/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 font-body">
+                          {ayah.numberInSurah}
+                        </span>
+                      </div>
+                      <p className="font-quran text-lg sm:text-xl leading-[2.6] text-foreground text-right mb-3" dir="rtl">
+                        {ayah.text}
+                      </p>
+                      {engText && (
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-[1.9] mb-3 font-body">
+                          <span className="text-primary/70 font-semibold text-[10px] mr-1.5 uppercase tracking-wide">EN</span> {engText}
+                        </p>
+                      )}
+                      {urduText && (
+                        <p className="font-urdu text-xs sm:text-sm text-muted-foreground leading-[2.4]" dir="rtl">
+                          <span className="text-accent/70 font-semibold text-[10px] ml-1.5">اردو</span> {urduText}
+                        </p>
+                      )}
                     </div>
-                    {/* Arabic */}
-                    <p className="font-quran text-xl sm:text-2xl leading-[2.6] text-foreground text-right mb-4" dir="rtl">
-                      {ayah.text}
-                    </p>
-                    {/* English */}
-                    {engText && (
-                      <p className="text-sm text-muted-foreground leading-[1.9] mb-4 font-body">
-                        <span className="text-primary/70 font-semibold text-[10px] mr-1.5 uppercase tracking-wide">EN</span> {engText}
-                      </p>
-                    )}
-                    {/* Urdu */}
-                    {urduText && (
-                      <p className="font-urdu text-sm text-muted-foreground leading-[2.4]" dir="rtl">
-                        <span className="text-accent/70 font-semibold text-[10px] ml-1.5">اردو</span> {urduText}
-                      </p>
-                    )}
+                  );
+                })}
+              </div>
+
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-border/30">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                    disabled={currentPage === 0}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-body font-medium disabled:opacity-30 hover:bg-primary/10 transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+                      let page: number;
+                      if (totalPages <= 5) page = idx;
+                      else if (currentPage < 3) page = idx;
+                      else if (currentPage > totalPages - 4) page = totalPages - 5 + idx;
+                      else page = currentPage - 2 + idx;
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-8 h-8 rounded-lg text-xs font-body font-medium transition-colors ${
+                            page === currentPage ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"
+                          }`}
+                        >
+                          {page + 1}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={currentPage === totalPages - 1}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-body font-medium disabled:opacity-30 hover:bg-primary/10 transition-colors"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           <div className="mt-4 pt-3 border-t border-border/30">

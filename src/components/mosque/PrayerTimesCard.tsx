@@ -22,7 +22,9 @@ const prayerNames = [
 
 function parseTimeToMinutes(time12: string): number {
   if (!time12 || typeof time12 !== "string") return -1;
-  const parts = time12.trim().split(" ");
+  // Normalize: handle "5:40AM" (no space) and "5:40 AM" (with space)
+  const normalized = time12.trim().replace(/(\d)(AM|PM)/i, "$1 $2");
+  const parts = normalized.split(" ");
   if (parts.length < 2) return -1;
   const [time, period] = parts;
   const timeParts = time.split(":").map(Number);
@@ -40,9 +42,10 @@ function getNowMinutesMasjid(): number {
     timeZone: MASJID_TIMEZONE,
     hour: "numeric",
     minute: "numeric",
-    hour12: false,
+    hourCycle: "h23",
   }).formatToParts(now);
-  const h = parseInt(parts.find(p => p.type === "hour")?.value || "0", 10);
+  let h = parseInt(parts.find(p => p.type === "hour")?.value || "0", 10);
+  if (h === 24) h = 0; // Some browsers return 24 for midnight
   const m = parseInt(parts.find(p => p.type === "minute")?.value || "0", 10);
   return h * 60 + m;
 }
