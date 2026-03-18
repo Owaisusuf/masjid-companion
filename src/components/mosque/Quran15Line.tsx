@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { BookOpen, ChevronRight, ChevronLeft, ArrowLeft, Loader2, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BookOpen, ChevronRight, ChevronLeft, ArrowLeft, Loader2, Search, ZoomIn, ZoomOut } from "lucide-react";
 import { juzSurahMap } from "@/data/juz-surah-map";
 
 interface Surah {
@@ -31,7 +31,7 @@ const Quran15Line = () => {
   const [browseMode, setBrowseMode] = useState<"surah" | "juz">("surah");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [fontSize, setFontSize] = useState(24);
+  const [fontSize, setFontSize] = useState(26);
 
   useEffect(() => {
     fetch(`${ALQURAN_API}/surah`)
@@ -95,13 +95,23 @@ const Quran15Line = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Find which juz the current surah belongs to
+  const currentJuzNumber = selectedSurah
+    ? juzSurahMap.find(j => j.surahs.includes(selectedSurah.englishName))?.number || 1
+    : selectedJuz || 1;
+
+  const showBismillah = selectedSurah && selectedSurah.number !== 1 && selectedSurah.number !== 9 && currentPage === 0;
+
   return (
-    <section className="px-4 max-w-4xl mx-auto">
-      <div className="section-heading">
-        <BookOpen className="w-5 h-5 text-primary shrink-0" />
-        <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground">15 Line Quran</h2>
-        <span className="font-urdu text-sm text-muted-foreground">پندرہ سطری قرآن</span>
-      </div>
+    <section className="px-2 sm:px-4 max-w-4xl mx-auto">
+      {/* Section heading - only when browsing */}
+      {!isReading && (
+        <div className="section-heading mb-5">
+          <BookOpen className="w-5 h-5 text-primary shrink-0" />
+          <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground">15 Line Quran</h2>
+          <span className="font-urdu text-sm text-muted-foreground">پندرہ سطری قرآن</span>
+        </div>
+      )}
 
       {!isReading ? (
         <div className="glass-card p-4 sm:p-6">
@@ -192,75 +202,135 @@ const Quran15Line = () => {
           )}
         </div>
       ) : (
-        <div className="glass-card p-3 sm:p-5">
-          {/* Top controls */}
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div className="flex flex-col gap-3">
+          {/* Controls bar */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <button
               onClick={goBack}
               className="flex items-center gap-1.5 text-primary hover:text-accent transition-colors text-sm font-body font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
-            <div className="text-center flex-1">
-              {selectedSurah && (
-                <>
-                  <h3 className="font-heading text-base font-bold text-foreground">{selectedSurah.englishName}</h3>
-                  <p className="font-nastaleeq text-2xl text-accent">{selectedSurah.name}</p>
-                  <p className="text-xs text-muted-foreground">{selectedSurah.numberOfAyahs} Ayahs • {selectedSurah.revelationType}</p>
-                </>
-              )}
-              {selectedJuz && (
-                <>
-                  <h3 className="font-heading text-base font-bold text-foreground">Parah {selectedJuz}</h3>
-                  <p className="font-urdu text-base text-accent" dir="rtl">پارہ {selectedJuz}</p>
-                </>
-              )}
-            </div>
-            {/* Font size controls */}
-            <div className="flex items-center gap-1">
-              <button onClick={() => setFontSize(f => Math.max(16, f - 2))} className="w-7 h-7 rounded-lg bg-secondary text-foreground text-xs font-bold hover:bg-primary/10 transition-colors">A-</button>
-              <span className="text-[10px] text-muted-foreground font-body w-6 text-center">{fontSize}</span>
-              <button onClick={() => setFontSize(f => Math.min(40, f + 2))} className="w-7 h-7 rounded-lg bg-secondary text-foreground text-xs font-bold hover:bg-primary/10 transition-colors">A+</button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setFontSize(f => Math.max(18, f - 2))}
+                className="w-8 h-8 rounded-lg bg-secondary text-foreground flex items-center justify-center hover:bg-primary/10 transition-colors"
+                title="Decrease font"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] text-muted-foreground font-body w-5 text-center">{fontSize}</span>
+              <button
+                onClick={() => setFontSize(f => Math.min(44, f + 2))}
+                className="w-8 h-8 rounded-lg bg-secondary text-foreground flex items-center justify-center hover:bg-primary/10 transition-colors"
+                title="Increase font"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Bismillah */}
-          {selectedSurah && selectedSurah.number !== 1 && selectedSurah.number !== 9 && (
-            <p className="font-quran text-2xl text-center text-accent mb-4 py-3 bg-accent/5 rounded-xl" dir="rtl" style={{ fontSize: fontSize + 4 }}>
-              بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
-            </p>
-          )}
-
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <p className="text-xs text-muted-foreground font-body">Loading...</p>
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground font-body">Loading Quran...</p>
             </div>
           ) : (
             <>
-              {/* Page info */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground font-body">
-                  <span>Page {currentPage + 1} of {totalPages}</span>
-                  <span>{pagedVerses.length} lines</span>
-                </div>
-              )}
-
-              {/* Arabic-only lines */}
-              <div className="bg-card rounded-xl border border-border p-4 sm:p-6" dir="rtl">
-                {pagedVerses.map((ayah, i) => (
-                  <p key={ayah.number} className="font-quran text-foreground text-right mb-1" style={{ fontSize, lineHeight: 2.8 }}>
-                    {ayah.text}
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-body mx-1 align-middle" dir="ltr">
-                      {ayah.numberInSurah}
+              {/* ========== QURAN PAGE — Printed style ========== */}
+              <div className="quran-page-outer rounded-2xl p-[6px] sm:p-[10px]" style={{
+                background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.12), hsl(var(--primary) / 0.15))",
+              }}>
+                <div className="quran-page-inner rounded-xl overflow-hidden" style={{
+                  border: "3px solid hsl(var(--primary) / 0.25)",
+                  background: "hsl(var(--card))",
+                }}>
+                  {/* ── Page Header ── */}
+                  <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b-2" style={{
+                    borderColor: "hsl(var(--primary) / 0.2)",
+                    background: "hsl(var(--primary) / 0.03)",
+                  }}>
+                    <span className="font-nastaleeq text-sm sm:text-base text-primary leading-relaxed" dir="rtl">
+                      {selectedSurah?.name || `پارہ ${selectedJuz}`}
                     </span>
-                  </p>
-                ))}
+                    <span className="font-body text-xs text-muted-foreground">
+                      {currentPage + 1} / {totalPages}
+                    </span>
+                    <span className="font-nastaleeq text-sm sm:text-base text-primary leading-relaxed" dir="rtl">
+                      {selectedSurah ? selectedSurah.englishName : `Parah ${selectedJuz}`}
+                    </span>
+                  </div>
+
+                  {/* ── Bismillah ── */}
+                  {showBismillah && (
+                    <div className="py-3 sm:py-4 text-center" style={{
+                      borderBottom: "1px solid hsl(var(--primary) / 0.12)",
+                      background: "hsl(var(--accent) / 0.03)",
+                    }}>
+                      <p
+                        className="font-nastaleeq text-accent"
+                        dir="rtl"
+                        style={{ fontSize: fontSize + 6, lineHeight: 2.2 }}
+                      >
+                        بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── Verses (15 lines) ── */}
+                  <div className="px-4 sm:px-8 py-4 sm:py-6" dir="rtl">
+                    {pagedVerses.map((ayah) => (
+                      <div
+                        key={ayah.number}
+                        className="quran-line border-b last:border-b-0"
+                        style={{
+                          borderColor: "hsl(var(--border) / 0.3)",
+                          paddingTop: "0.3em",
+                          paddingBottom: "0.3em",
+                        }}
+                      >
+                        <p
+                          className="font-nastaleeq text-foreground text-right leading-[2.8] sm:leading-[3]"
+                          style={{ fontSize, wordSpacing: "0.08em" }}
+                        >
+                          {ayah.text}
+                          {/* Verse number marker */}
+                          <span
+                            className="inline-flex items-center justify-center rounded-full border mx-1 align-middle select-none"
+                            style={{
+                              width: fontSize * 0.85,
+                              height: fontSize * 0.85,
+                              borderColor: "hsl(var(--primary) / 0.3)",
+                              background: "hsl(var(--primary) / 0.06)",
+                              fontSize: fontSize * 0.38,
+                              fontFamily: "Inter, sans-serif",
+                              color: "hsl(var(--primary))",
+                              lineHeight: 1,
+                            }}
+                            dir="ltr"
+                          >
+                            {ayah.numberInSurah}
+                          </span>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Page Footer ── */}
+                  <div className="flex items-center justify-center px-4 py-2 border-t" style={{
+                    borderColor: "hsl(var(--primary) / 0.15)",
+                    background: "hsl(var(--primary) / 0.02)",
+                  }}>
+                    <span className="font-nastaleeq text-xs sm:text-sm text-muted-foreground" dir="rtl">
+                      منزل {currentJuzNumber}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/* Pagination */}
+              {/* ── Pagination ── */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-border/30 flex-wrap">
+                <div className="flex items-center justify-center gap-2 flex-wrap py-2">
                   <button
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 0}
@@ -269,14 +339,13 @@ const Quran15Line = () => {
                     <ChevronLeft className="w-3.5 h-3.5" /> Previous
                   </button>
 
-                  {/* Page jump */}
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(7, totalPages) }, (_, idx) => {
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
                       let page: number;
-                      if (totalPages <= 7) page = idx;
-                      else if (currentPage < 4) page = idx;
-                      else if (currentPage > totalPages - 5) page = totalPages - 7 + idx;
-                      else page = currentPage - 3 + idx;
+                      if (totalPages <= 5) page = idx;
+                      else if (currentPage < 3) page = idx;
+                      else if (currentPage > totalPages - 4) page = totalPages - 5 + idx;
+                      else page = currentPage - 2 + idx;
                       return (
                         <button
                           key={page}
@@ -302,12 +371,6 @@ const Quran15Line = () => {
               )}
             </>
           )}
-
-          <div className="mt-4 pt-3 border-t border-border/30">
-            <p className="text-[10px] text-muted-foreground/50 text-center font-body">
-              Arabic: Quran Uthmani (Hafs) • 15 lines per page
-            </p>
-          </div>
         </div>
       )}
     </section>
