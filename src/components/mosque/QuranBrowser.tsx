@@ -142,10 +142,6 @@ const QuranBrowser = () => {
 
   const isReading = selectedSurah || selectedJuz;
 
-  const totalPages = Math.ceil(arabicVerses.length / LINES_PER_PAGE);
-  const pagedArabic = arabicVerses.slice(currentPage * LINES_PER_PAGE, (currentPage + 1) * LINES_PER_PAGE);
-  const pagedEnglish = englishVerses.slice(currentPage * LINES_PER_PAGE, (currentPage + 1) * LINES_PER_PAGE);
-  const pagedUrdu = urduVerses.slice(currentPage * LINES_PER_PAGE, (currentPage + 1) * LINES_PER_PAGE);
 
   return (
     <section id="quran" className="px-4 max-w-5xl mx-auto">
