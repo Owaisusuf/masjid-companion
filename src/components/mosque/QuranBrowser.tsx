@@ -302,18 +302,10 @@ const QuranBrowser = () => {
             </div>
           ) : (
             <>
-              {/* Page info */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground font-body">
-                  <span>Page {currentPage + 1} of {totalPages}</span>
-                  <span>{LINES_PER_PAGE} verses per page</span>
-                </div>
-              )}
-
               <div className="space-y-4">
-                {pagedArabic.map((ayah, i) => {
-                  const engText = pagedEnglish[i]?.text;
-                  const urduText = pagedUrdu[i]?.text;
+                {arabicVerses.map((ayah, i) => {
+                  const engText = englishVerses[i]?.text;
+                  const urduText = urduVerses[i]?.text;
                   return (
                     <div key={`${ayah.number}`} className="p-3 sm:p-4 rounded-xl bg-secondary/40 border border-border/50">
                       <div className="flex items-center gap-2 mb-2">
@@ -338,46 +330,6 @@ const QuranBrowser = () => {
                   );
                 })}
               </div>
-
-              {/* Pagination controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-border/30">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                    disabled={currentPage === 0}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-body font-medium disabled:opacity-30 hover:bg-primary/10 transition-colors"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
-                      let page: number;
-                      if (totalPages <= 5) page = idx;
-                      else if (currentPage < 3) page = idx;
-                      else if (currentPage > totalPages - 4) page = totalPages - 5 + idx;
-                      else page = currentPage - 2 + idx;
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 rounded-lg text-xs font-body font-medium transition-colors ${
-                            page === currentPage ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"
-                          }`}
-                        >
-                          {page + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={currentPage === totalPages - 1}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-body font-medium disabled:opacity-30 hover:bg-primary/10 transition-colors"
-                  >
-                    Next <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
             </>
           )}
 
