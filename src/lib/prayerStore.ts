@@ -88,7 +88,7 @@ export function subscribeToPrayerConfig(
   callback: (config: PrayerConfig) => void
 ): () => void {
   const channel = supabase
-    .channel("prayer_config_changes")
+    .channel(`prayer_config_changes_${Math.random().toString(36).slice(2)}`)
     .on(
       "postgres_changes",
       { event: "UPDATE", schema: "public", table: "prayer_config" },
